@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>{{template "head" .}}</head>
+<body>
+{{template "navbar" .}}
+<div class="container" style="max-width: 800px;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>{{if .IsEdit}}Edit Order{{else}}New Order{{end}}</h3>
+    <a href="/orders" class="btn btn-outline-secondary">Back</a>
+  </div>
+
+  {{template "alerts" .}}
+
+  <div class="card p-4">
+    <form method="POST" action="{{if .IsEdit}}/orders/{{.Order.OrderID}}/{{.Order.OrderNo}}/edit{{else}}/orders/create{{end}}">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Order ID</label>
+          <input type="number" name="order_id" class="form-control"
+                 value="{{.Order.OrderID}}" {{if .IsEdit}}disabled{{end}} required>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Order No</label>
+          <input type="text" name="order_no" class="form-control" maxlength="20"
+                 value="{{.Order.OrderNo}}" {{if .IsEdit}}disabled{{end}} required>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Order Date</label>
+          <input type="date" name="order_date" class="form-control"
+                 value="{{if .Order.OrderDate}}{{.Order.OrderDate.Format "2006-01-02"}}{{end}}">
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Supplier From (Supplier ID)</label>
+          <input type="text" name="supplier_from" class="form-control" maxlength="20" value="{{.Order.SupplierFrom}}">
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Customer ID</label>
+        <input type="text" name="customer_id" class="form-control" maxlength="50" value="{{.Order.CustomerID}}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Description</label>
+        <input type="text" name="description" class="form-control" maxlength="100" value="{{.Order.Description}}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Document Number</label>
+        <input type="text" name="document_number" class="form-control" maxlength="20" value="{{.Order.DocumentNumber}}">
+      </div>
+
+      {{if not .IsEdit}}
+      <hr>
+      <h6>Detail Lines <small class="text-muted">(at least one is required)</small></h6>
+      <table class="table table-sm" id="detailRows">
+        <thead>
+          <tr>
+            <th>Item Name</th><th>Measure</th><th>Qty</th><th>Price</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="detailRowsBody">
+          <tr>
+            <td><input type="text" name="item_name[]" class="form-control" maxlength="20" required></td>
+            <td><input type="text" name="measure[]" class="form-control" maxlength="20"></td>
+            <td><input type="number" name="qty[]" class="form-control" required></td>
+            <td><input type="number" step="0.01" name="price[]" class="form-control" required></td>
+            <td><button type="button" class="btn btn-sm btn-outline-danger remove-row">&times;</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <button type="button" id="addRow" class="btn btn-sm btn-outline-secondary mb-3">+ Add Line</button>
+      {{else}}
+      <div class="alert alert-info">
+        Detail lines are managed from the order's detail page after saving.
+      </div>
+      {{end}}
+
+      <div>
+        <button type="submit" class="btn btn-primary">{{if .IsEdit}}Save Changes{{else}}Create{{end}}</button>
+        <a href="/orders" class="btn btn-light">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{{if not .IsEdit}}
+<script>
+document.getElementById('addRow').addEventListener('click', function () {
+  var body = document.getElementById('detailRowsBody');
+  var row = body.rows[0].cloneNode(true);
+  row.querySelectorAll('input').forEach(function (input) { input.value = ''; });
+  body.appendChild(row);
+});
+document.getElementById('detailRowsBody').addEventListener('click', function (e) {
+  if (e.target.classList.contains('remove-row')) {
+    var body = document.getElementById('detailRowsBody');
+    if (body.rows.length > 1) {
+      e.target.closest('tr').remove();
+    }
+  }
+});
+</script>
+{{end}}
+
+{{template "footer" .}}
+</body>
+</html>

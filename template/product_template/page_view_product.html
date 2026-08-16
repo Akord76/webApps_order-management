@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>{{template "head" .}}</head>
+<body>
+{{template "navbar" .}}
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Products</h3>
+    <a href="/products/create" class="btn btn-primary">+ New Product</a>
+  </div>
+
+  {{template "alerts" .}}
+
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Product No</th>
+            <th>Product ID</th>
+            <th>Name</th>
+            <th>Measure</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Products}}
+          <tr>
+            <td>{{.ProductNumber}}</td>
+            <td>{{.ProductID}}</td>
+            <td>{{.ProductName}}</td>
+            <td>{{.Measure}}</td>
+            <td class="text-end">
+              <a href="/products/{{.ProductNumber}}/{{.ProductID}}" class="btn btn-sm btn-outline-secondary">View</a>
+              <a href="/products/{{.ProductNumber}}/{{.ProductID}}/edit" class="btn btn-sm btn-outline-primary">Edit</a>
+              <form method="POST" action="/products/{{.ProductNumber}}/{{.ProductID}}/delete" class="d-inline"
+                    onsubmit="return confirm('Delete this product?');">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {{else}}
+          <tr><td colspan="5" class="text-center text-muted py-4">No products found.</td></tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{{template "footer" .}}
+</body>
+</html>

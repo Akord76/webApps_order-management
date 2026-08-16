@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>{{template "head" .}}</head>
+<body>
+{{template "navbar" .}}
+<div class="container" style="max-width: 640px;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>{{if .IsEdit}}Edit Customer{{else}}New Customer{{end}}</h3>
+    <a href="/customers" class="btn btn-outline-secondary">Back</a>
+  </div>
+
+  {{template "alerts" .}}
+
+  <div class="card p-4">
+    <form method="POST" action="{{if .IsEdit}}/customers/{{.Customer.CustNumber}}/{{.Customer.CustID}}/edit{{else}}/customers/create{{end}}">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Cust Number</label>
+          <input type="number" name="cust_number" class="form-control"
+                 value="{{.Customer.CustNumber}}" {{if .IsEdit}}disabled{{end}} required>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Cust ID</label>
+          <input type="text" name="cust_id" class="form-control" maxlength="50"
+                 value="{{.Customer.CustID}}" {{if .IsEdit}}disabled{{end}} required>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Customer Name</label>
+        <input type="text" name="cust_name" class="form-control" maxlength="50" value="{{.Customer.CustName}}" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Address</label>
+        <input type="text" name="address" class="form-control" maxlength="255" value="{{.Customer.Address}}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">City</label>
+        <input type="text" name="city" class="form-control" maxlength="25" value="{{.Customer.City}}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Contact Person</label>
+        <input type="text" name="contact_person" class="form-control" maxlength="25" value="{{.Customer.ContactPerson}}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-control" maxlength="25" value="{{.Customer.Email}}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Bank Number</label>
+        <input type="text" name="bank_number" class="form-control" maxlength="50" value="{{.Customer.BankNumber}}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Phone Number</label>
+        <input type="text" name="phone_number" class="form-control" maxlength="50" value="{{.Customer.PhoneNumber}}">
+      </div>
+      <button type="submit" class="btn btn-primary">{{if .IsEdit}}Save Changes{{else}}Create{{end}}</button>
+      <a href="/customers" class="btn btn-light">Cancel</a>
+    </form>
+  </div>
+</div>
+{{template "footer" .}}
+</body>
+</html>

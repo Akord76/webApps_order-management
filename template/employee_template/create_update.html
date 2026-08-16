@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>{{template "head" .}}</head>
+<body>
+{{template "navbar" .}}
+<div class="container" style="max-width: 640px;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>{{if .IsEdit}}Edit Employee{{else}}New Employee{{end}}</h3>
+    <a href="/employees" class="btn btn-outline-secondary">Back</a>
+  </div>
+
+  {{template "alerts" .}}
+
+  <div class="card p-4">
+    <form method="POST" action="{{if .IsEdit}}/employees/{{.Employee.EmployeeID}}/{{.Employee.EmployeeCardNumber}}/edit{{else}}/employees/create{{end}}">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Employee ID</label>
+          <input type="text" class="form-control" value="{{.Employee.EmployeeID}}" disabled>
+          <div class="form-text">{{if not .IsEdit}}Assigned automatically by the server.{{end}}</div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Employee Card Number</label>
+          <input type="number" name="employee_card_number" class="form-control"
+                 value="{{.Employee.EmployeeCardNumber}}" {{if .IsEdit}}disabled{{end}} required>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">First Name</label>
+          <input type="text" name="first_name" class="form-control" maxlength="25" value="{{.Employee.FirstName}}" required>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Last Name</label>
+          <input type="text" name="last_name" class="form-control" maxlength="25" value="{{.Employee.LastName}}">
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Gender</label>
+        <input type="text" name="gender" class="form-control" maxlength="25" value="{{.Employee.Gender}}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-control" maxlength="25" value="{{.Employee.Email}}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Department ID</label>
+        <input type="number" name="department_id" class="form-control" value="{{.Employee.DepartmentID}}" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Phone Number</label>
+        <input type="text" name="phone_number" class="form-control" maxlength="50" value="{{.Employee.PhoneNumber}}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Bank Number</label>
+        <input type="text" name="bank_number" class="form-control" maxlength="50" value="{{.Employee.BankNumber}}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Photo Path</label>
+        <input type="text" name="photo_path" class="form-control" maxlength="50" value="{{.Employee.PhotoPath}}">
+      </div>
+      <button type="submit" class="btn btn-primary">{{if .IsEdit}}Save Changes{{else}}Create{{end}}</button>
+      <a href="/employees" class="btn btn-light">Cancel</a>
+    </form>
+  </div>
+</div>
+{{template "footer" .}}
+</body>
+</html>

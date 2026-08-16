@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>{{template "head" .}}</head>
+<body>
+{{template "navbar" .}}
+<div class="container">
+  <div class="card p-5">
+    <h2>Welcome, {{.Username}}</h2>
+    <p class="text-muted">Signed in as <strong>{{.Role}}</strong>.</p>
+    <div class="row mt-4 g-3">
+      <div class="col-md-3"><a href="/categories" class="btn btn-outline-primary w-100">Categories</a></div>
+      <div class="col-md-3"><a href="/products" class="btn btn-outline-primary w-100">Products</a></div>
+      <div class="col-md-3"><a href="/customers" class="btn btn-outline-primary w-100">Customers</a></div>
+      <div class="col-md-3"><a href="/employees" class="btn btn-outline-primary w-100">Employees</a></div>
+      <div class="col-md-3"><a href="/suppliers" class="btn btn-outline-primary w-100">Suppliers</a></div>
+      <div class="col-md-3"><a href="/orders" class="btn btn-outline-primary w-100">Orders</a></div>
+      <div class="col-md-3"><a href="/order-sales" class="btn btn-outline-primary w-100">Order Sales</a></div>
+    </div>
+  </div>
+</div>
+{{template "footer" .}}
+</body>
+</html>

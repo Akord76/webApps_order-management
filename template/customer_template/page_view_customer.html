@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>{{template "head" .}}</head>
+<body>
+{{template "navbar" .}}
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Customers</h3>
+    <a href="/customers/create" class="btn btn-primary">+ New Customer</a>
+  </div>
+
+  {{template "alerts" .}}
+
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Cust No</th>
+            <th>Cust ID</th>
+            <th>Name</th>
+            <th>City</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Customers}}
+          <tr>
+            <td>{{.CustNumber}}</td>
+            <td>{{.CustID}}</td>
+            <td>{{.CustName}}</td>
+            <td>{{.City}}</td>
+            <td class="text-end">
+              <a href="/customers/{{.CustNumber}}/{{.CustID}}" class="btn btn-sm btn-outline-secondary">View</a>
+              <a href="/customers/{{.CustNumber}}/{{.CustID}}/edit" class="btn btn-sm btn-outline-primary">Edit</a>
+              <form method="POST" action="/customers/{{.CustNumber}}/{{.CustID}}/delete" class="d-inline"
+                    onsubmit="return confirm('Delete this customer?');">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {{else}}
+          <tr><td colspan="5" class="text-center text-muted py-4">No customers found.</td></tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{{template "footer" .}}
+</body>
+</html>

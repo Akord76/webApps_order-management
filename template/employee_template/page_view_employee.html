@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>{{template "head" .}}</head>
+<body>
+{{template "navbar" .}}
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Employees</h3>
+    <a href="/employees/create" class="btn btn-primary">+ New Employee</a>
+  </div>
+
+  {{template "alerts" .}}
+
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Employee ID</th>
+            <th>Card Number</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Employees}}
+          <tr>
+            <td>{{.EmployeeID}}</td>
+            <td>{{.EmployeeCardNumber}}</td>
+            <td>{{.FirstName}} {{.LastName}}</td>
+            <td>{{.Email}}</td>
+            <td class="text-end">
+              <a href="/employees/{{.EmployeeID}}/{{.EmployeeCardNumber}}" class="btn btn-sm btn-outline-secondary">View</a>
+              <a href="/employees/{{.EmployeeID}}/{{.EmployeeCardNumber}}/edit" class="btn btn-sm btn-outline-primary">Edit</a>
+              <form method="POST" action="/employees/{{.EmployeeID}}/{{.EmployeeCardNumber}}/delete" class="d-inline"
+                    onsubmit="return confirm('Delete this employee?');">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {{else}}
+          <tr><td colspan="5" class="text-center text-muted py-4">No employees found.</td></tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{{template "footer" .}}
+</body>
+</html>

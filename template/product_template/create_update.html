@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>{{template "head" .}}</head>
+<body>
+{{template "navbar" .}}
+<div class="container" style="max-width: 640px;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>{{if .IsEdit}}Edit Product{{else}}New Product{{end}}</h3>
+    <a href="/products" class="btn btn-outline-secondary">Back</a>
+  </div>
+
+  {{template "alerts" .}}
+
+  <div class="card p-4">
+    <form method="POST" action="{{if .IsEdit}}/products/{{.Product.ProductNumber}}/{{.Product.ProductID}}/edit{{else}}/products/create{{end}}">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Product Number</label>
+          <input type="number" name="product_number" class="form-control"
+                 value="{{.Product.ProductNumber}}" {{if .IsEdit}}disabled{{end}} required>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Product ID</label>
+          <input type="text" name="product_id" class="form-control" maxlength="25"
+                 value="{{.Product.ProductID}}" {{if .IsEdit}}disabled{{end}} required>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Category ID</label>
+        <input type="number" name="product_category_id" class="form-control"
+               value="{{if .Product.ProductCategoryID}}{{.Product.ProductCategoryID}}{{end}}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Product Name</label>
+        <input type="text" name="product_name" class="form-control" maxlength="50"
+               value="{{.Product.ProductName}}" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Measure</label>
+        <input type="text" name="measure" class="form-control" maxlength="20" value="{{.Product.Measure}}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Description</label>
+        <input type="text" name="description" class="form-control" maxlength="100" value="{{.Product.Description}}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Document Number</label>
+        <input type="text" name="document_number" class="form-control" maxlength="20" value="{{.Product.DocumentNumber}}">
+      </div>
+      <button type="submit" class="btn btn-primary">{{if .IsEdit}}Save Changes{{else}}Create{{end}}</button>
+      <a href="/products" class="btn btn-light">Cancel</a>
+    </form>
+  </div>
+</div>
+{{template "footer" .}}
+</body>
+</html>

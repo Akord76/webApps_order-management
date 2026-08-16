@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>{{template "head" .}}</head>
+<body>
+{{template "navbar" .}}
+<div class="container" style="max-width: 800px;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Order Detail</h3>
+    <a href="/orders" class="btn btn-outline-secondary">Back</a>
+  </div>
+
+  {{template "alerts" .}}
+
+  <div class="card p-4 mb-4">
+    <dl class="row mb-0">
+      <dt class="col-sm-3">Order ID</dt>
+      <dd class="col-sm-9">{{.Order.OrderID}}</dd>
+      <dt class="col-sm-3">Order No</dt>
+      <dd class="col-sm-9">{{.Order.OrderNo}}</dd>
+      <dt class="col-sm-3">Order Date</dt>
+      <dd class="col-sm-9">{{if .Order.OrderDate}}{{.Order.OrderDate.Format "2006-01-02"}}{{end}}</dd>
+      <dt class="col-sm-3">Supplier From</dt>
+      <dd class="col-sm-9">{{.Order.SupplierFrom}}</dd>
+      <dt class="col-sm-3">Customer ID</dt>
+      <dd class="col-sm-9">{{.Order.CustomerID}}</dd>
+      <dt class="col-sm-3">Description</dt>
+      <dd class="col-sm-9">{{.Order.Description}}</dd>
+      <dt class="col-sm-3">Document Number</dt>
+      <dd class="col-sm-9">{{.Order.DocumentNumber}}</dd>
+    </dl>
+    {{if .CanWrite}}
+    <div class="mt-3">
+      <a href="/orders/{{.Order.OrderID}}/{{.Order.OrderNo}}/edit" class="btn btn-primary">Edit</a>
+      <form method="POST" action="/orders/{{.Order.OrderID}}/{{.Order.OrderNo}}/delete" class="d-inline"
+            onsubmit="return confirm('Delete this order and all its details?');">
+        <button type="submit" class="btn btn-danger">Delete Order</button>
+      </form>
+    </div>
+    {{end}}
+  </div>
+
+  <div class="card p-4">
+    <h5>Detail Lines</h5>
+    <table class="table table-sm">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Item Name</th>
+          <th>Measure</th>
+          <th>Qty</th>
+          <th>Price</th>
+          {{if .CanWrite}}<th class="text-end">Actions</th>{{end}}
+        </tr>
+      </thead>
+      <tbody>
+        {{range .Order.Details}}
+        <tr>
+          <td>{{.OrderDetailNo}}</td>
+          <td>{{.ItemName}}</td>
+          <td>{{.Measure}}</td>
+          <td>{{.Qty}}</td>
+          <td>{{.Price}}</td>
+          {{if $.CanWrite}}
+          <td class="text-end">
+            <form method="POST" action="/orders/{{$.Order.OrderID}}/{{$.Order.OrderNo}}/details/{{.OrderDetailNo}}/delete"
+                  onsubmit="return confirm('Remove this line?');">
+              <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+            </form>
+          </td>
+          {{end}}
+        </tr>
+        {{else}}
+        <tr><td colspan="6" class="text-center text-muted py-3">No detail lines.</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+
+    {{if .CanWrite}}
+    <hr>
+    <h6>Add Detail Line</h6>
+    <form method="POST" action="/orders/{{.Order.OrderID}}/{{.Order.OrderNo}}/details" class="row g-2">
+      <div class="col-md-4">
+        <input type="text" name="item_name" class="form-control" placeholder="Item Name" maxlength="20" required>
+      </div>
+      <div class="col-md-2">
+        <input type="text" name="measure" class="form-control" placeholder="Measure" maxlength="20">
+      </div>
+      <div class="col-md-2">
+        <input type="number" name="qty" class="form-control" placeholder="Qty" required>
+      </div>
+      <div class="col-md-2">
+        <input type="number" step="0.01" name="price" class="form-control" placeholder="Price" required>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Add</button>
+      </div>
+    </form>
+    {{end}}
+  </div>
+</div>
+{{template "footer" .}}
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>{{template "head" .}}</head>
+<body>
+{{template "navbar" .}}
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Orders</h3>
+    {{if .CanWrite}}<a href="/orders/create" class="btn btn-primary">+ New Order</a>{{end}}
+  </div>
+
+  {{template "alerts" .}}
+
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Order No</th>
+            <th>Order Date</th>
+            <th>Customer ID</th>
+            <th>Supplier From</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Orders}}
+          <tr>
+            <td>{{.OrderID}}</td>
+            <td>{{.OrderNo}}</td>
+            <td>{{if .OrderDate}}{{.OrderDate.Format "2006-01-02"}}{{end}}</td>
+            <td>{{.CustomerID}}</td>
+            <td>{{.SupplierFrom}}</td>
+            <td class="text-end">
+              <a href="/orders/{{.OrderID}}/{{.OrderNo}}" class="btn btn-sm btn-outline-secondary">View</a>
+              {{if $.CanWrite}}
+              <a href="/orders/{{.OrderID}}/{{.OrderNo}}/edit" class="btn btn-sm btn-outline-primary">Edit</a>
+              <form method="POST" action="/orders/{{.OrderID}}/{{.OrderNo}}/delete" class="d-inline"
+                    onsubmit="return confirm('Delete this order and all its details?');">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+              </form>
+              {{end}}
+            </td>
+          </tr>
+          {{else}}
+          <tr><td colspan="6" class="text-center text-muted py-4">No orders found.</td></tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{{template "footer" .}}
+</body>
+</html>
