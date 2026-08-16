@@ -72,4 +72,3 @@ Make sure the backend API (`order-management/`) is running first —
 | `/` | home dashboard, links to every module |
 | `/categories`, `/products`, `/customers`, `/employees`, `/suppliers` | list/detail/create/edit/delete |
 | `/orders`, `/order-sales` | list/detail for everyone; create/edit/delete + detail-line management restricted to ADMIN/MANAGER |
-

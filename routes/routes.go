@@ -12,6 +12,7 @@ import (
 // Handlers bundles every page handler the router needs.
 type Handlers struct {
 	Auth      *handler.AuthHandler
+	User      *handler.UserHandler
 	Category  *handler.CategoryHandler
 	Product   *handler.ProductHandler
 	Customer  *handler.CustomerHandler
@@ -25,12 +26,9 @@ type Handlers struct {
 //
 // Role hierarchy mirrors the backend API:
 //
-//	ADMIN   : full access everywhere
+//	ADMIN   : full access everywhere, including User Management
 //	MANAGER : create/update/view Orders & Order Sales, full access to master data
 //	USER    : view Orders & Order Sales only, full access to master data
-//
-// (User account management itself is an ADMIN-only capability on the
-// backend and isn't exposed as a page in this web app.)
 func SetupRouter(jwtSecret, cookieName string, h *Handlers) *gin.Engine {
 	r := gin.Default()
 
@@ -62,6 +60,19 @@ func SetupRouter(jwtSecret, cookieName string, h *Handlers) *gin.Engine {
 		}
 		c.HTML(http.StatusOK, "layout/home.html", data)
 	})
+
+	// User Management — ADMIN only.
+	users := protected.Group("/users")
+	users.Use(middleware.RequireRoles(middleware.RoleAdmin))
+	{
+		users.GET("", h.User.List)
+		users.GET("/create", h.User.ShowCreate)
+		users.POST("/create", h.User.Create)
+		users.GET("/:id", h.User.Detail)
+		users.GET("/:id/edit", h.User.ShowEdit)
+		users.POST("/:id/edit", h.User.Update)
+		users.POST("/:id/delete", h.User.Delete)
+	}
 
 	// Master data — any authenticated role.
 	categories := protected.Group("/categories")

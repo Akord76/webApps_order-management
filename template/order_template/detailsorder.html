@@ -56,7 +56,10 @@
         {{range .Order.Details}}
         <tr>
           <td>{{.OrderDetailNo}}</td>
-          <td>{{.ItemName}}</td>
+          <td>
+            {{.ItemName}}
+            {{range $.Products}}{{if eq .ProductID $.ItemName}}<span class="text-muted">({{.ProductName}})</span>{{end}}{{end}}
+          </td>
           <td>{{.Measure}}</td>
           <td>{{.Qty}}</td>
           <td>{{.Price}}</td>
@@ -78,9 +81,15 @@
     {{if .CanWrite}}
     <hr>
     <h6>Add Detail Line</h6>
-    <form method="POST" action="/orders/{{.Order.OrderID}}/{{.Order.OrderNo}}/details" class="row g-2">
+    <p class="text-muted small mb-2">Search by product name — the product's ID is what gets saved.</p>
+    <datalist id="productOptions">
+      {{range .Products}}<option data-id="{{.ProductID}}" value="{{.ProductName}}"></option>{{end}}
+    </datalist>
+    <form method="POST" action="/orders/{{.Order.OrderID}}/{{.Order.OrderNo}}/details" class="row g-2" id="addDetailForm">
       <div class="col-md-4">
-        <input type="text" name="item_name" class="form-control" placeholder="Item Name" maxlength="20" required>
+        <input type="text" id="productSearch" class="form-control" list="productOptions"
+               placeholder="Search product name" autocomplete="off" required>
+        <input type="hidden" name="item_name" id="itemNameHidden">
       </div>
       <div class="col-md-2">
         <input type="text" name="measure" class="form-control" placeholder="Measure" maxlength="20">
@@ -95,6 +104,26 @@
         <button type="submit" class="btn btn-primary w-100">Add</button>
       </div>
     </form>
+    <script>
+      (function () {
+        var search = document.getElementById('productSearch');
+        var datalist = document.getElementById('productOptions');
+        var hidden = document.getElementById('itemNameHidden');
+        search.addEventListener('input', function () {
+          var match = null;
+          datalist.querySelectorAll('option').forEach(function (opt) {
+            if (opt.value === search.value) match = opt;
+          });
+          hidden.value = match ? match.getAttribute('data-id') : '';
+        });
+        document.getElementById('addDetailForm').addEventListener('submit', function (e) {
+          if (!hidden.value) {
+            e.preventDefault();
+            alert('Please pick a product from the list.');
+          }
+        });
+      })();
+    </script>
     {{end}}
   </div>
 </div>

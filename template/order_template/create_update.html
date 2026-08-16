@@ -31,15 +31,34 @@
           <input type="date" name="order_date" class="form-control"
                  value="{{if .Order.OrderDate}}{{.Order.OrderDate.Format "2006-01-02"}}{{end}}">
         </div>
+
+        <!-- Supplier From: search by name, submit SupplierID -->
         <div class="col-md-6 mb-3">
-          <label class="form-label">Supplier From (Supplier ID)</label>
-          <input type="text" name="supplier_from" class="form-control" maxlength="20" value="{{.Order.SupplierFrom}}">
+          <label class="form-label">Supplier From</label>
+          <input type="text" id="supplierSearch" class="form-control" list="supplierOptions"
+                 placeholder="Search supplier by name" autocomplete="off"
+                 value="{{range .Suppliers}}{{if eq .SupplierID $.Order.SupplierFrom}}{{.SupplierName}}{{end}}{{end}}">
+          <datalist id="supplierOptions">
+            {{range .Suppliers}}<option data-id="{{.SupplierID}}" value="{{.SupplierName}}"></option>{{end}}
+          </datalist>
+          <input type="hidden" name="supplier_from" id="supplierFromID" value="{{.Order.SupplierFrom}}">
+          <div class="form-text">Type to search, then pick a supplier from the list.</div>
         </div>
       </div>
+
+      <!-- Customer: search by name, submit CustID -->
       <div class="mb-3">
-        <label class="form-label">Customer ID</label>
-        <input type="text" name="customer_id" class="form-control" maxlength="50" value="{{.Order.CustomerID}}">
+        <label class="form-label">Customer</label>
+        <input type="text" id="customerSearch" class="form-control" list="customerOptions"
+               placeholder="Search customer by name" autocomplete="off"
+               value="{{range .Customers}}{{if eq .CustID $.Order.CustomerID}}{{.CustName}}{{end}}{{end}}">
+        <datalist id="customerOptions">
+          {{range .Customers}}<option data-id="{{.CustID}}" value="{{.CustName}}"></option>{{end}}
+        </datalist>
+        <input type="hidden" name="customer_id" id="customerID" value="{{.Order.CustomerID}}">
+        <div class="form-text">Type to search, then pick a customer from the list.</div>
       </div>
+
       <div class="mb-3">
         <label class="form-label">Description</label>
         <input type="text" name="description" class="form-control" maxlength="100" value="{{.Order.Description}}">
@@ -52,15 +71,27 @@
       {{if not .IsEdit}}
       <hr>
       <h6>Detail Lines <small class="text-muted">(at least one is required)</small></h6>
+      <p class="text-muted small mb-2">
+        Search each line by product name — the product's ID is what actually gets saved.
+      </p>
+      <datalist id="productOptions">
+        {{range .Products}}<option data-id="{{.ProductID}}" data-name="{{.ProductName}}" value="{{.ProductName}}"></option>{{end}}
+      </datalist>
       <table class="table table-sm" id="detailRows">
         <thead>
           <tr>
-            <th>Item Name</th><th>Measure</th><th>Qty</th><th>Price</th><th></th>
+            <th>Item (search by product name)</th><th>Measure</th><th>Qty</th><th>Price</th><th></th>
           </tr>
         </thead>
         <tbody id="detailRowsBody">
           <tr>
-            <td><input type="text" name="item_name[]" class="form-control" maxlength="20" required></td>
+            <td>
+              <input type="text" class="form-control product-search" list="productOptions"
+                     placeholder="Search product name" autocomplete="off" required>
+              <!-- Submitted value is the ProductID, not the free-text name -->
+              <input type="hidden" name="item_name[]" class="item-name-hidden">
+              <input type="hidden" name="product_id[]" class="product-id-hidden">
+            </td>
             <td><input type="text" name="measure[]" class="form-control" maxlength="20"></td>
             <td><input type="number" name="qty[]" class="form-control" required></td>
             <td><input type="number" step="0.01" name="price[]" class="form-control" required></td>
@@ -83,14 +114,60 @@
   </div>
 </div>
 
-{{if not .IsEdit}}
 <script>
+// Generic "search by name, resolve to ID" binder for a single input +
+// its <datalist> + a hidden field that actually gets submitted.
+function bindAutocomplete(searchInput, datalist, hiddenInput) {
+  if (!searchInput || !datalist || !hiddenInput) return;
+  searchInput.addEventListener('input', function () {
+    var match = null;
+    datalist.querySelectorAll('option').forEach(function (opt) {
+      if (opt.value === searchInput.value) match = opt;
+    });
+    hiddenInput.value = match ? match.getAttribute('data-id') : '';
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  bindAutocomplete(
+    document.getElementById('supplierSearch'),
+    document.getElementById('supplierOptions'),
+    document.getElementById('supplierFromID')
+  );
+  bindAutocomplete(
+    document.getElementById('customerSearch'),
+    document.getElementById('customerOptions'),
+    document.getElementById('customerID')
+  );
+});
+
+{{if not .IsEdit}}
+function bindProductRow(row) {
+  var search = row.querySelector('.product-search');
+  var hiddenItemName = row.querySelector('.item-name-hidden');
+  var hiddenProductId = row.querySelector('.product-id-hidden');
+  var datalist = document.getElementById('productOptions');
+  bindAutocomplete(search, datalist, hiddenItemName);
+  // keep product_id[] in sync with the same selection
+  search.addEventListener('input', function () {
+    var match = null;
+    datalist.querySelectorAll('option').forEach(function (opt) {
+      if (opt.value === search.value) match = opt;
+    });
+    hiddenProductId.value = match ? match.getAttribute('data-id') : '';
+  });
+}
+
+document.querySelectorAll('#detailRowsBody tr').forEach(bindProductRow);
+
 document.getElementById('addRow').addEventListener('click', function () {
   var body = document.getElementById('detailRowsBody');
   var row = body.rows[0].cloneNode(true);
   row.querySelectorAll('input').forEach(function (input) { input.value = ''; });
   body.appendChild(row);
+  bindProductRow(row);
 });
+
 document.getElementById('detailRowsBody').addEventListener('click', function (e) {
   if (e.target.classList.contains('remove-row')) {
     var body = document.getElementById('detailRowsBody');
@@ -99,8 +176,22 @@ document.getElementById('detailRowsBody').addEventListener('click', function (e)
     }
   }
 });
-</script>
+
+// Guard against submitting a row where the user typed something that
+// doesn't match any product in the list (hidden item_name[] stays empty).
+document.querySelector('form').addEventListener('submit', function (e) {
+  var rows = document.querySelectorAll('#detailRowsBody tr');
+  for (var i = 0; i < rows.length; i++) {
+    var hidden = rows[i].querySelector('.item-name-hidden');
+    if (!hidden.value) {
+      e.preventDefault();
+      alert('Please pick a product from the list for every detail line (row ' + (i + 1) + ').');
+      return;
+    }
+  }
+});
 {{end}}
+</script>
 
 {{template "footer" .}}
 </body>

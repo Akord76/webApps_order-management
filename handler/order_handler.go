@@ -20,6 +20,24 @@ func NewOrderHandler(api *client.APIClient) *OrderHandler {
 	return &OrderHandler{api: api}
 }
 
+// loadLookups fetches suppliers, customers, and products so the order form
+// can offer autocomplete-by-name while still submitting the underlying ID
+// (SupplierID / CustID / ProductID) that the backend expects.
+func (h *OrderHandler) loadLookups(c *gin.Context, data gin.H) {
+	var suppliers []model.Supplier
+	if err := h.api.Get("/suppliers", token(c), &suppliers); err == nil {
+		data["Suppliers"] = suppliers
+	}
+	var customers []model.Customer
+	if err := h.api.Get("/customers", token(c), &customers); err == nil {
+		data["Customers"] = customers
+	}
+	var products []model.Product
+	if err := h.api.Get("/products", token(c), &products); err == nil {
+		data["Products"] = products
+	}
+}
+
 func (h *OrderHandler) List(c *gin.Context) {
 	var orders []model.OrderMaster
 	data := baseData(c, "Orders")
@@ -41,6 +59,10 @@ func (h *OrderHandler) Detail(c *gin.Context) {
 
 	data := baseData(c, "Order Detail")
 	data["Order"] = order
+	var products []model.Product
+	if err := h.api.Get("/products", token(c), &products); err == nil {
+		data["Products"] = products
+	}
 	c.HTML(http.StatusOK, "order_template/detailsorder.html", data)
 }
 
@@ -48,6 +70,7 @@ func (h *OrderHandler) ShowCreate(c *gin.Context) {
 	data := baseData(c, "New Order")
 	data["IsEdit"] = false
 	data["Order"] = model.OrderMaster{}
+	h.loadLookups(c, data)
 	c.HTML(http.StatusOK, "order_template/create_update.html", data)
 }
 
@@ -108,6 +131,7 @@ func (h *OrderHandler) Create(c *gin.Context) {
 		data["IsEdit"] = false
 		data["Order"] = model.OrderMaster{OrderID: orderID, OrderNo: orderNo}
 		data["Error"] = "Failed to create order: " + err.Error()
+		h.loadLookups(c, data)
 		c.HTML(http.StatusOK, "order_template/create_update.html", data)
 		return
 	}
@@ -127,6 +151,7 @@ func (h *OrderHandler) ShowEdit(c *gin.Context) {
 	data := baseData(c, "Edit Order")
 	data["IsEdit"] = true
 	data["Order"] = order
+	h.loadLookups(c, data)
 	c.HTML(http.StatusOK, "order_template/create_update.html", data)
 }
 
@@ -153,6 +178,7 @@ func (h *OrderHandler) Update(c *gin.Context) {
 		data["IsEdit"] = true
 		data["Order"] = model.OrderMaster{OrderID: oid, OrderNo: orderNo}
 		data["Error"] = "Failed to update order: " + err.Error()
+		h.loadLookups(c, data)
 		c.HTML(http.StatusOK, "order_template/create_update.html", data)
 		return
 	}
