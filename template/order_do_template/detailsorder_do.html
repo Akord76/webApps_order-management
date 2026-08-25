@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>{{template "head" .}}</head>
+<body>
+{{template "navbar" .}}
+<div class="container" style="max-width: 1000px;">
+
+
+  {{template "alerts" .}}
+
+  <div class="card p-5 mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <td>
+    <h3>Order Do Header</h3>
+    <a href="/orderdo" class="btn btn-secondary">Back</a>
+    </td>
+
+  </div>
+    <div class="row">
+        <!-- KOLOM KIRI: Informasi Utama DO -->
+        <div class="col-md-6">
+            <table class="table table-borderless table-sm mb-0">
+                <tbody>
+                    <tr>
+                        <td style="width: 35%; font-weight: bold; padding: 6px 0;">Order Do ID</td><td>:</td>
+                        <td style="padding: 6px 0;">{{.OrderDo.OrderDoID}}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; padding: 6px 0;">Order Do No</td><td>:</td>
+                        <td style="padding: 6px 0;">{{.OrderDo.OrderDoNo}}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; padding: 6px 0;">Order Do Date</td><td>:</td>
+                        <td style="padding: 6px 0;">{{if .OrderDo.OrderDoDate}}{{.OrderDo.OrderDoDate.Format "2006-01-02"}}{{end}}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; padding: 6px 0;">Customer ID</td><td>:</td>
+                        <td style="padding: 6px 0;">{{.OrderDo.CustomerID}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- KOLOM KANAN: Informasi Shipment / Pengiriman -->
+        <div class="col-md-6">
+            <table class="table table-borderless table-sm mb-0">
+                <tbody>
+                    <tr>
+                        <td style="width: 35%; font-weight: bold; padding: 6px 0;">Shipment</td><td>:</td>
+                        <td style="padding: 6px 0;">{{.OrderDo.Shipment}}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; padding: 6px 0;">Ship Number</td><td>:</td>
+                        <td style="padding: 6px 0;">{{.OrderDo.ShipNumber}}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; padding: 6px 0;">Driver Number</td><td>:</td>
+                        <td style="padding: 6px 0;">{{.OrderDo.DriverNumber}}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; padding: 6px 0;">Description</td><td>:</td>
+                        <td style="padding: 6px 0;">{{.OrderDo.Description}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {{if .CanWrite}}
+    <div class="mt-3">
+      <a href="/orderdo/{{.OrderDo.OrderDoID}}/{{.OrderDo.OrderDoNo}}/edit" class="btn btn-primary">Edit</a>
+      <form method="POST" 
+            action="/orderdo/{{.OrderDo.OrderDoID}}/{{.OrderDo.OrderDoNo}}/delete" 
+            class="d-inline"
+            onsubmit="return confirm('Delete this order Do and all its details?');">
+        <button type="submit" class="btn btn-danger">
+          Delete Order Do
+        </button>
+      </form>
+    </div>
+    {{end}}
+  </div>
+
+  <div class="card p-4">
+    <h5>Detail Lines</h5>
+    <table class="table table-sm">
+      <thead>
+        <tr>
+          <th>DO ID</th>
+          <th>Do Number</th>
+          <th>Order Number</th>
+          <th>Item Name</th>
+          <th>Measure</th>
+          <th>Qty</th>
+          <th>Price</th>
+          <th>Document No</th>
+          {{if .CanWrite}}<th class="text-end">Actions</th>{{end}}
+        </tr>
+      </thead>
+      <tbody>
+        {{range .OrderDo.Details}}
+        <tr>
+          <td>{{.OrderDoDetailID}}</td>
+          <td style="padding: 6px 0;">{{.OrderDoNo}}</td>
+          <td>{{.OrderNo}}</td>
+          <td>{{.ItemName}}</td>
+          <td>{{.Measure}}</td>
+          <td>{{.Qty}}</td>
+          <td>{{.Price}}</td>
+          <td>{{.DocumentNumber}}</td>
+          {{if $.CanWrite}}
+
+<!-- <td class="text-end">
+  <button type="button" 
+          class="btn btn-sm btn-outline-danger"
+          onclick="delDetail('{{$.OrderDo.OrderDoID}}', '{{$.OrderDo.OrderDoNo}}', '{{.OrderDoDetailID}}', this)">
+    <i class="bi bi-trash"></i> Remove
+  </button>
+</td> -->
+<td class="text-center">
+    <!-- Mengirim form POST langsung ke route Go Anda -->
+    <form action="/orderdo/{{.OrderDo.OrderDoID}}/{{.OrderDo.OrderDoNo}}/details/{{.OrderDoDetailID}}/{{.OrderDoDetailNo}}/delete" 
+          method="POST" 
+          onsubmit="return confirm('Apakah Anda yakin ingin menghapus detail order ini?');" 
+          style="display: inline;">
+        
+        <button type="submit" class="btn btn-sm btn-outline-danger">
+            <i class="bi bi-trash"></i> Hapus
+        </button>
+    </form>
+</td>
+
+          {{end}}
+        </tr>
+        {{else}}
+        <tr><td colspan="7" class="text-center text-muted py-3">No detail lines.</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+
+    {{if .CanWrite}}
+    
+    <hr>
+<h6>Add Detail Line</h6>
+<form method="POST" 
+      action="/orderdo/{{.OrderDo.OrderDoID}}/{{.OrderDo.OrderDoNo}}/details" 
+      class="row g-2" id="addDetailForm">
+
+  <div class="col-md-3 position-relative">
+    <label class="form-label small mb-0">Customer</label>
+    <input type="text" id="customerName" class="form-control form-control-sm" placeholder="Cari customer..." autocomplete="off">
+    <input type="hidden" id="customerID" name="customer_id_filter">
+    <div id="customerSuggestions" class="ac-box"></div>
+  </div>
+
+  <div class="col-md-2 position-relative">
+    <label class="form-label small mb-0">Order No (PO)</label>
+    <input type="text" id="orderNoInput" class="form-control form-control-sm" placeholder="Cari PO..." autocomplete="off" required>
+    <input type="hidden" name="order_no" id="orderNoHidden">
+    <input type="hidden" name="product_id" id="productIdHidden" required>
+    <input type="hidden" name="order_do_detail_id" id="detailIdHidden">
+    <div id="orderSuggestions" class="ac-box"></div>
+  </div>
+
+  <div class="col-md-2">
+    <label class="form-label small mb-0">Product Name</label>
+    <input type="text" id="productName" name="item_name" class="form-control form-control-sm" readonly>
+  </div>
+
+  <div class="col-md-1">
+    <label class="form-label small mb-0">Measure</label>
+    <input type="text" id="measure" name="measure" class="form-control form-control-sm" readonly>
+  </div>
+
+  <div class="col-md-1">
+    <label class="form-label small mb-0">Qty</label>
+    <input type="number" id="qty" name="qty" class="form-control form-control-sm" readonly>
+  </div>
+
+  <div class="col-md-1">
+    <label class="form-label small mb-0">Price</label>
+    <input type="number" id="price" name="price" class="form-control form-control-sm" readonly>
+  </div>
+
+  <div class="col-md-1">
+    <label class="form-label small mb-0">Doc No</label>
+    <input type="text" name="document_number" class="form-control form-control-sm" placeholder="Doc No">
+  </div>
+
+  <div class="col-md-1 d-flex align-items-end">
+    <button type="submit" class="btn btn-primary btn-sm w-100">Add</button>
+  </div>
+</form>
+
+<style>
+.ac-box {
+  position: absolute;
+  z-index: 20;
+  background: #fff;
+  border: 1px solid #ddd;
+  width: 100%;
+  max-height: 220px;
+  overflow-y: auto;
+  display: none;
+  box-shadow: 0 4px 8px rgba(0,0,0,.08);
+}
+.ac-item { padding: 6px 8px; cursor: pointer; font-size: .875rem; }
+.ac-item:hover { background: #f0f0f0; }
+</style>
+
+<script>
+(function () {
+  const custNameInput = document.getElementById('customerName');
+  const custIdHidden  = document.getElementById('customerID');
+  const custBox       = document.getElementById('customerSuggestions');
+
+  const orderNoInput   = document.getElementById('orderNoInput');
+  const orderNoHidden  = document.getElementById('orderNoHidden');
+  const productIdHidden= document.getElementById('productIdHidden');
+  const productNameInp = document.getElementById('productName');
+  const measureInput   = document.getElementById('measure');
+  const qtyInput        = document.getElementById('qty');
+  const priceInput      = document.getElementById('price');
+  const orderBox        = document.getElementById('orderSuggestions');
+
+  let custTimer, orderTimer;
+
+  function resetOrderFields() {
+    orderNoHidden.value = '';
+    productIdHidden.value = '';
+    productNameInp.value = '';
+    measureInput.value = '';
+    qtyInput.value = '';
+    priceInput.value = '';
+  }
+
+async function delDetail(orderDoID, orderDoNo, orderDoDetailID, btnEl) {
+    const konfirmasi = confirm('Remove this line?');
+    if (!konfirmasi) return;
+
+    // disable tombol sementara biar tidak double-click saat request jalan
+    btnEl.disabled = true;
+
+    try {
+      
+        const token = localStorage.getItem('auth_token'); // atau sumber lain sesuai polamu
+        const response = await fetch(`/orderdo/details/${orderDoID}/${orderDoNo}/${orderDoDetailID}`, {
+        method: 'DELETE',
+        credentials: 'include', // aman disertakan meski pakai token juga
+        headers: {
+            'Authorization': token ? `Bearer ${token}` : undefined
+        }
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(errText || `HTTP ${response.status}`);
+        }
+
+        // Hapus baris dari DOM langsung tanpa reload halaman
+        const row = btnEl.closest('tr');
+        if (row) row.remove();
+
+        // opsional: kalau ada fungsi toast/notifikasi di project ini
+        if (typeof ui !== 'undefined' && ui.showToast) {
+            ui.showToast('Detail line removed');
+        }
+
+    } catch (error) {
+        console.error('Gagal menghapus detail:', error);
+        btnEl.disabled = false; // aktifkan lagi tombolnya kalau gagal
+
+        if (typeof ui !== 'undefined' && ui.showToast) {
+            ui.showToast('Gagal menghapus detail: ' + error.message);
+        } else {
+            alert('Gagal menghapus detail: ' + error.message);
+        }
+    }
+}
+
+  // ---------- Customer Autocomplete ----------
+  custNameInput.addEventListener('input', () => {
+    clearTimeout(custTimer);
+    custIdHidden.value = '';
+    const q = custNameInput.value.trim();
+    if (!q) { custBox.style.display = 'none'; return; }
+
+    custTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/customers/autocomplete?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        renderCustomerSuggestions(data.results || []);
+      } catch (err) { console.error(err); }
+    }, 250);
+  });
+
+  function renderCustomerSuggestions(items) {
+    custBox.innerHTML = '';
+    if (!items.length) { custBox.style.display = 'none'; return; }
+    items.forEach(cust => {
+      const div = document.createElement('div');
+      div.className = 'ac-item';
+      div.textContent = `${cust.CustomerName} (${cust.CustomerID})`;
+      div.addEventListener('click', () => {
+        custNameInput.value = cust.CustomerName;
+        custIdHidden.value = cust.CustomerID;
+        custBox.style.display = 'none';
+        orderNoInput.value = '';
+        resetOrderFields();
+      });
+      custBox.appendChild(div);
+    });
+    custBox.style.display = 'block';
+  }
+
+  // ---------- OrderNo (PO) Autocomplete ----------
+  orderNoInput.addEventListener('input', () => {
+    clearTimeout(orderTimer);
+    resetOrderFields();
+    const q = orderNoInput.value.trim();
+    if (!q) { orderBox.style.display = 'none'; return; }
+
+    orderTimer = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams({ q });
+        if (custIdHidden.value) params.set('customer_id', custIdHidden.value);
+        const res = await fetch(`/api/orders/autocomplete?${params}`);
+        const data = await res.json();
+        renderOrderSuggestions(data.results || []);
+      } catch (err) { console.error(err); }
+    }, 250);
+  });
+
+  function renderOrderSuggestions(items) {
+    orderBox.innerHTML = '';
+    if (!items.length) { orderBox.style.display = 'none'; return; }
+    items.forEach(row => {
+      const div = document.createElement('div');
+      div.className = 'ac-item';
+      div.textContent = `${row.OrderNo} — ${row.ProductName} (${row.Measure}, qty ${row.Qty})`;
+      div.addEventListener('click', () => {
+        orderNoInput.value = row.OrderNo;
+        orderNoHidden.value = row.OrderNo;
+        productIdHidden.value = row.ProductID;
+        productNameInp.value = row.ProductName;
+        measureInput.value = row.Measure;
+        qtyInput.value = row.Qty;
+        priceInput.value = row.Price;
+        if (!custIdHidden.value) custIdHidden.value = row.CustomerID;
+        orderBox.style.display = 'none';
+      });
+      orderBox.appendChild(div);
+    });
+    orderBox.style.display = 'block';
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#customerName') && !e.target.closest('#customerSuggestions')) custBox.style.display = 'none';
+    if (!e.target.closest('#orderNoInput') && !e.target.closest('#orderSuggestions')) orderBox.style.display = 'none';
+  });
+})();
+</script>
+
+
+
+    
+    {{end}}
+  </div>
+</div>
+{{template "footer" .}}
+</body>
+</html>
+
+
+

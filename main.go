@@ -18,15 +18,15 @@ func main() {
 
 	// ---- Handlers ----
 	h := &routes.Handlers{
-		Auth:      handler.NewAuthHandler(api, cfg.CookieName, cfg.CookieSecure),
-		User:      handler.NewUserHandler(api),
-		Category:  handler.NewCategoryHandler(api),
-		Product:   handler.NewProductHandler(api),
-		Customer:  handler.NewCustomerHandler(api),
-		Employee:  handler.NewEmployeeHandler(api),
-		Supplier:  handler.NewSupplierHandler(api),
-		Order:     handler.NewOrderHandler(api),
-		OrderSale: handler.NewOrderSaleHandler(api),
+		Auth:     handler.NewAuthHandler(api, cfg.CookieName, cfg.CookieSecure),
+		User:     handler.NewUserHandler(api),
+		Category: handler.NewCategoryHandler(api),
+		Product:  handler.NewProductHandler(api),
+		Customer: handler.NewCustomerHandler(api),
+		Employee: handler.NewEmployeeHandler(api),
+		Supplier: handler.NewSupplierHandler(api),
+		Order:    handler.NewOrderHandler(api),
+		OrderDo:  handler.NewOrderDoHandler(api),
 	}
 
 	// ---- Router ----

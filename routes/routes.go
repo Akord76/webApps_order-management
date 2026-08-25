@@ -11,15 +11,15 @@ import (
 
 // Handlers bundles every page handler the router needs.
 type Handlers struct {
-	Auth      *handler.AuthHandler
-	User      *handler.UserHandler
-	Category  *handler.CategoryHandler
-	Product   *handler.ProductHandler
-	Customer  *handler.CustomerHandler
-	Employee  *handler.EmployeeHandler
-	Supplier  *handler.SupplierHandler
-	Order     *handler.OrderHandler
-	OrderSale *handler.OrderSaleHandler
+	Auth     *handler.AuthHandler
+	User     *handler.UserHandler
+	Category *handler.CategoryHandler
+	Product  *handler.ProductHandler
+	Customer *handler.CustomerHandler
+	Employee *handler.EmployeeHandler
+	Supplier *handler.SupplierHandler
+	Order    *handler.OrderHandler
+	OrderDo  *handler.OrderDoHandler
 }
 
 // SetupRouter wires every page route.
@@ -151,21 +151,38 @@ func SetupRouter(jwtSecret, cookieName string, h *Handlers) *gin.Engine {
 		}
 	}
 
-	orderSales := protected.Group("/order-sales")
-	{
-		orderSales.GET("", h.OrderSale.List)
-		orderSales.GET("/:orderSaleNo/:orderSaleID", h.OrderSale.Detail)
+	// orderdo.GET("", middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager, middleware.RoleUser), h.Orderdo.GetAll)
+	// 		orderdo.GET("/:orderDoID/:orderDoNo", middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager, middleware.RoleUser), h.Orderdo.GetByID)
+	// 		orderdo.GET("/load_details/:orderDoID/:orderDoNo/details", middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager, middleware.RoleUser), h.Orderdo.GetDetails)
 
-		write := orderSales.Group("")
+	// 		orderdo.POST("", middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager), h.Orderdo.Create)
+	// 		orderdo.PUT("/:orderDoID/:orderDoNo", middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager), h.Orderdo.Update)
+	// 		orderdo.DELETE("/:orderDoID/:orderDoNo", middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager), h.Orderdo.Delete)
+
+	// 		orderdo.POST("/:orderDoID/details", middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager), h.Orderdo.AddDetail)
+	// 		orderdo.PUT("/details/:orderDoID/:orderDoNo", middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager), h.Orderdo.UpdateDetail)
+	// 		orderdo.DELETE("/details/:orderDoID/:orderDoNo", middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager), h.Orderdo.DeleteDetail)
+
+	// 		orderdo.GET("/load_order/:orderDoNo", middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager, middleware.RoleUser), h.Orderdo.GetOrderDO)
+
+	orderDos := protected.Group("/orderdo")
+	{
+		orderDos.GET("", h.OrderDo.List)
+		orderDos.GET("/:orderDoID/:orderDoNo", h.OrderDo.Detail)
+
+		write := orderDos.Group("")
 		write.Use(middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager))
 		{
-			write.GET("/create", h.OrderSale.ShowCreate)
-			write.POST("/create", h.OrderSale.Create)
-			write.GET("/:orderSaleNo/:orderSaleID/edit", h.OrderSale.ShowEdit)
-			write.POST("/:orderSaleNo/:orderSaleID/edit", h.OrderSale.Update)
-			write.POST("/:orderSaleNo/:orderSaleID/delete", h.OrderSale.Delete)
-			write.POST("/:orderSaleNo/:orderSaleID/details", h.OrderSale.AddDetail)
-			write.POST("/:orderSaleNo/:orderSaleID/details/:orderSaleDetailNo/:orderSaleDetailID/delete", h.OrderSale.DeleteDetail)
+			write.GET("/create", h.OrderDo.ShowCreate)
+			write.POST("/create", h.OrderDo.Create)
+			write.GET("/:orderDoID/:orderDoNo/edit", h.OrderDo.ShowEdit)
+			write.POST("/:orderDoID/:orderDoNo/edit", h.OrderDo.Update)
+			write.POST("/:orderDoID/:orderDoNo/delete", h.OrderDo.Delete)
+			write.POST("/:orderDoID/details", h.OrderDo.AddDetail)
+			write.POST("/details/:orderDoID/:orderDoNo/:orderDoDetailID/delete",
+				middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager),
+				h.OrderDo.DeleteDetail)
+
 		}
 	}
 

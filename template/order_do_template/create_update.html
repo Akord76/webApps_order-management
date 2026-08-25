@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>{{template "head" .}}</head>
+<body>
+{{template "navbar" .}}
+<div class="container" style="max-width: 1000px;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>{{if .IsEdit}}Edit Order Do{{else}}New Order Do{{end}}</h3>
+    <a href="/orderdo" class="btn btn-outline-secondary">Back</a>
+  </div>
+
+  {{template "alerts" .}}
+
+  <div class="card p-5">
+    <form method="POST" action="{{if .IsEdit}}/orderdo/{{.OrderDo.OrderDoID}}/{{.OrderDo.OrderDoNo}}/edit{{else}}/orderdo/create{{end}}">
+      <div class="row">
+ 
+          <input type="hidden" name="order_do_id" class="form-control"
+                 value="{{.OrderDo.OrderDoID}}" {{if .IsEdit}}disabled{{end}}>
+  
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Order Do No</label>
+          <input type="text" name="order_do_no" class="form-control" maxlength="50"
+                 value="{{.OrderDo.OrderDoNo}}" {{if .IsEdit}}disabled{{end}} required>
+        </div>
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Order Do Date</label>
+          <input type="date" name="order_do_date" class="form-control"
+                 value="{{if .OrderDo.OrderDoDate}}{{.OrderDo.OrderDoDate.Format "2006-01-02"}}{{end}}">
+        </div>
+        <div class="col-md-5 mb-3">
+          <label class="form-label">Customer ID | Name</label>
+          <input type="text" name="customer_id" class="form-control" maxlength="50" value="{{.OrderDo.CustomerID}}">
+        </div>
+      </div>
+     
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Shipment</label>
+          <input type="text" name="shipment" class="form-control" maxlength="20" value="{{.OrderDo.Shipment}}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Ship Number</label>
+          <input type="text" name="ship_number" class="form-control" maxlength="20" value="{{.OrderDo.ShipNumber}}">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Driver Number</label>
+          <input type="text" name="driver_number" class="form-control" maxlength="20" value="{{.OrderDo.DriverNumber}}">
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Description</label>
+        <input type="text" name="description" class="form-control" maxlength="100" value="{{.OrderDo.Description}}">
+      </div>
+
+      {{if not .IsEdit}}
+      <hr>
+      <h6>Detail Lines <small class="text-muted">(at least one is required)</small></h6>
+      <table class="table table-sm" id="detailRows">
+        <thead>
+          <tr>
+            <th>PO Number</th>
+            <th>Item Name</th>
+            <th>Measure</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Doc Number</th>
+          </tr>
+        </thead>
+        <tbody id="detailRowsBody">
+          <tr>
+            <td>
+                <input type="text" id="orderNoInput" 
+                   name="order_no[]"
+                   class="form-control form-control-sm" 
+                   placeholder="Cari PO..." 
+                   autocomplete="off" required>
+                    <input type="hidden" name="order_no" id="orderNoHidden">
+                    <input type="hidden" name="product_id" id="productIdHidden" required>
+                    <input type="hidden" name="order_do_detail_id" id="detailIdHidden">
+            </td>
+            
+            
+            <td><input type="text" name="item_name[]" class="form-control" maxlength="20" required></td>
+            <td><input type="text" name="measure[]" class="form-control" maxlength="20"></td>
+            <td><input type="number" name="qty[]" class="form-control" required></td>
+            <td><input type="number" step="0.01" name="price[]" class="form-control" required></td>
+            <td><button type="button" class="btn btn-sm btn-outline-danger remove-row">&times;</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <button type="button" id="addRow" class="btn btn-sm btn-outline-secondary mb-3">+ Add Line</button>
+      {{else}}
+      <div class="alert alert-info">
+        Detail lines are managed from the order Do's detail page after saving.
+      </div>
+      {{end}}
+
+      <div>
+        <button type="submit" class="btn btn-primary">{{if .IsEdit}}Save Changes{{else}}Create{{end}}</button>
+        <a href="/orderdo" class="btn btn-light">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{{if not .IsEdit}}
+<script>
+document.getElementById('addRow').addEventListener('click', function () {
+  var body = document.getElementById('detailRowsBody');
+  var row = body.rows[0].cloneNode(true);
+  row.querySelectorAll('input').forEach(function (input) { input.value = ''; });
+  body.appendChild(row);
+});
+
+document.getElementById('detailRowsBody').addEventListener('click', function (e) {
+  if (e.target.classList.contains('remove-row')) {
+    var body = document.getElementById('detailRowsBody');
+    if (body.rows.length > 1) {
+      e.target.closest('tr').remove();
+    }
+  }
+});
+</script>
+{{end}}
+
+{{template "footer" .}}
+</body>
+</html>
