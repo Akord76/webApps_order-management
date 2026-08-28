@@ -11,20 +11,20 @@
 
   {{template "alerts" .}}
 
-  <div class="card">
+  <div class="card" style="width: 1300px;">
     <div class="table-responsive">
       <table class="table table-hover mb-0">
         <thead>
           <tr>
-            <th>Order Do ID</th>
-            <th>Order Do No</th>
-            <th>Order Do Date</th>
+            <th>Do ID</th>
+            <th>Do Num</th>
+            <th>Do Date</th>
             <th>Customer ID</th>
             <th>Shipment</th>
             <th>Ship Number</th>
             <th>Driver Number</th>
             <th>Description</th>
-            <th class="text-end">Actions</th>
+            <th class="text-end" style="text-align: center;">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -33,12 +33,12 @@
             <td>{{.OrderDoID}}</td>
             <td>{{.OrderDoNo}}</td>
             <td>{{if .OrderDoDate}}{{.OrderDoDate.Format "2006-01-02"}}{{end}}</td>
-            <td>{{.CustomerID}}</td>
+            <td>{{.CustomerID}}-{{.CustomerName}}</td>
             <td>{{.Shipment}}</td>
             <td>{{.ShipNumber}}</td>
             <td>{{.DriverNumber}}</td>
             <td>{{.Description}}</td>
-            <td class="text-end">
+            <td class="text-end" style="content: center; min-width: 80px;">
               <a href="/orderdo/{{.OrderDoID}}/{{.OrderDoNo}}" class="btn btn-sm btn-outline-secondary">View</a>
               {{if $.CanWrite}}
               <a href="/orderdo/{{.OrderDoID}}/{{.OrderDoNo}}/edit" class="btn btn-sm btn-outline-primary">Edit</a>

@@ -1,12 +1,15 @@
 package routes
 
 import (
+	"html/template"
 	"net/http"
 
 	"webApps_order-management/handler"
 	"webApps_order-management/middleware"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 // Handlers bundles every page handler the router needs.
@@ -37,8 +40,21 @@ func SetupRouter(jwtSecret, cookieName string, h *Handlers) *gin.Engine {
 	// same-named files across modules (create_update.html appears in every
 	// module folder) from colliding the way html/template's default
 	// basename-only naming would.
+	// 1. WAJIB: Daftarkan FuncMap SEBELUM LoadHTMLGlob!
+	r.SetFuncMap(template.FuncMap{
+		"formatOrderDoPrice": func(amount float64) string {
+			p := message.NewPrinter(language.Indonesian)
+			return p.Sprintf("%.0f", amount)
+		},
+		// Tambahkan helper perkalian jika diperlukan di template
+		"mul": func(a int, b float64) float64 {
+			return float64(a) * b
+		},
+	})
+
 	r.HTMLRender = loadTemplates("template")
 
+	r.Run(":8083")
 	// ---- Public routes ----
 	r.GET("/login", middleware.OptionalAuth(jwtSecret, cookieName), h.Auth.ShowLogin)
 	r.POST("/login", h.Auth.Login)
@@ -148,22 +164,9 @@ func SetupRouter(jwtSecret, cookieName string, h *Handlers) *gin.Engine {
 			write.POST("/:orderID/:orderNo/delete", h.Order.Delete)
 			write.POST("/:orderID/:orderNo/details", h.Order.AddDetail)
 			write.POST("/:orderID/:orderNo/details/:orderDetailNo/delete", h.Order.DeleteDetail)
+
 		}
 	}
-
-	// orderdo.GET("", middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager, middleware.RoleUser), h.Orderdo.GetAll)
-	// 		orderdo.GET("/:orderDoID/:orderDoNo", middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager, middleware.RoleUser), h.Orderdo.GetByID)
-	// 		orderdo.GET("/load_details/:orderDoID/:orderDoNo/details", middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager, middleware.RoleUser), h.Orderdo.GetDetails)
-
-	// 		orderdo.POST("", middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager), h.Orderdo.Create)
-	// 		orderdo.PUT("/:orderDoID/:orderDoNo", middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager), h.Orderdo.Update)
-	// 		orderdo.DELETE("/:orderDoID/:orderDoNo", middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager), h.Orderdo.Delete)
-
-	// 		orderdo.POST("/:orderDoID/details", middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager), h.Orderdo.AddDetail)
-	// 		orderdo.PUT("/details/:orderDoID/:orderDoNo", middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager), h.Orderdo.UpdateDetail)
-	// 		orderdo.DELETE("/details/:orderDoID/:orderDoNo", middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager), h.Orderdo.DeleteDetail)
-
-	// 		orderdo.GET("/load_order/:orderDoNo", middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager, middleware.RoleUser), h.Orderdo.GetOrderDO)
 
 	orderDos := protected.Group("/orderdo")
 	{
@@ -178,11 +181,32 @@ func SetupRouter(jwtSecret, cookieName string, h *Handlers) *gin.Engine {
 			write.GET("/:orderDoID/:orderDoNo/edit", h.OrderDo.ShowEdit)
 			write.POST("/:orderDoID/:orderDoNo/edit", h.OrderDo.Update)
 			write.POST("/:orderDoID/:orderDoNo/delete", h.OrderDo.Delete)
-			write.POST("/:orderDoID/details", h.OrderDo.AddDetail)
-			write.POST("/details/:orderDoID/:orderDoNo/:orderDoDetailID/delete",
-				middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager),
-				h.OrderDo.DeleteDetail)
+			//Details
+			//write.GET("/load_details/:orderDoID/:orderDoNo/details", h.OrderDo.)
+			// write.POST("/act_addDetail/:orderDoNo/details", h.OrderDo.AddDetail)
+			// write.POST("/details/:orderDoID/:orderDoNo/delete", h.OrderDo.DeleteDetail)
+			write.POST("/act_delDetail/:orderDoID/:orderDoNo/details/:orderDoDetailID/:orderDoDetailNo/delete", h.OrderDo.DeleteDetail)
 
+			//alamat Ambil detail hasil test postman = 200
+			// http://localhost:8083/api/orderdo/load_details/:orderDoID/:orderDoNo/details
+
+			// //alamat Hapus detail hasil test postman = 204
+			// http://localhost:8083/api/orderdo/details/:orderDoDetailID/:orderDoDetailNo
+
+			// //alamat add detail hasil test postman = 201
+			// http://localhost:8083/api/orderdo/:orderDoNo/details
+
+			// ini sudah test postman dan bekerja dengan baik, bisa di sesuaikan dengan ini ?
+
+			//write.POST("/:orderDoNo/details", h.OrderDo.AddDetail)
+			// Menangkap orderDoID dan orderDoNo dari URL halaman client
+			write.POST("/:orderDoID/:orderDoNo/details", h.OrderDo.AddDetail)
+			write.POST("/details/:orderDoDetailID/:orderDoDetailNo/delete", h.OrderDo.DeleteDetail)
+			// Autocomplete proxies for the "Add Detail Line" form on the
+			// detail page: browser calls these (cookie auth), the handler
+			// forwards to the backend with the server-held Bearer token.
+			write.GET("/lookup/customers/:custName", h.OrderDo.LookupCustomers)
+			write.GET("/lookup/orders/:custID/:query", h.OrderDo.LookupOrders)
 		}
 	}
 

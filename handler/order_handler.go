@@ -238,3 +238,19 @@ func (h *OrderHandler) DeleteDetail(c *gin.Context) {
 
 	c.Redirect(http.StatusFound, redirectBase+"?ok="+url.QueryEscape("Detail line removed"))
 }
+
+// func (h *OrderHandler) GetCustAutocomplete(c *gin.Context) {
+// 	custID := c.Param("custID")
+// 	orderNo := c.Param("orderNo")
+// 	orderID := c.Param("orderID")
+	
+// 	redirectBase := "/orders/" + orderID + "/" + orderNo
+// 	path := redirectBase + "/getOrder/" + custID + "/" + orderNo
+
+// 	if err := h.api.Delete(path, token(c)); err != nil {
+// 		c.Redirect(http.StatusFound, redirectBase+"?err="+url.QueryEscape("Failed to remove detail: "+err.Error()))
+// 		return
+// 	}
+
+// 	c.Redirect(http.StatusFound, redirectBase+"?ok="+url.QueryEscape("Detail line removed"))
+// }

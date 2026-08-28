@@ -49,6 +49,7 @@
           <th>Measure</th>
           <th>Qty</th>
           <th>Price</th>
+          <th>Total</th>
           {{if .CanWrite}}<th class="text-end">Actions</th>{{end}}
         </tr>
       </thead>
@@ -62,7 +63,8 @@
           </td>
           <td>{{.Measure}}</td>
           <td>{{.Qty}}</td>
-          <td>{{.Price}}</td>
+          <td>{{.FormatPrice}}</td>
+          <td>{{.FormatTotal}}</td>
           {{if $.CanWrite}}
           <td class="text-end">
             <form method="POST" action="/orders/{{$.Order.OrderID}}/{{$.Order.OrderNo}}/details/{{.OrderDetailNo}}/delete"
@@ -76,6 +78,13 @@
         <tr><td colspan="6" class="text-center text-muted py-3">No detail lines.</td></tr>
         {{end}}
       </tbody>
+      <tfoot>
+        <tr class="fw-bold table-light">
+          <td colspan="5" class="text-end">Grand Total:</td>
+          <td>{{.Order.GrandTotal}}</td>
+          <td></td><td></td>
+        </tr>
+      </tfoot>
     </table>
 
     {{if .CanWrite}}

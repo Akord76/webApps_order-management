@@ -3,7 +3,7 @@
 <head>{{template "head" .}}</head>
 <body>
 {{template "navbar" .}}
-<div class="container" style="max-width: 1000px;">
+<div class="container" style="max-width: 1200px;">
 
 
   {{template "alerts" .}}
@@ -82,88 +82,98 @@
 
   <div class="card p-4">
     <h5>Detail Lines</h5>
-    <table class="table table-sm">
+    <table class="table table-sm" id="detailTable">
       <thead>
         <tr>
-          <th>DO ID</th>
-          <th>Do Number</th>
-          <th>Order Number</th>
+          <th>PO Number</th>
           <th>Item Name</th>
           <th>Measure</th>
           <th>Qty</th>
           <th>Price</th>
-          <th>Document No</th>
+          <th>Total</th>
+          <th>Document Num</th>
           {{if .CanWrite}}<th class="text-end">Actions</th>{{end}}
         </tr>
       </thead>
       <tbody>
         {{range .OrderDo.Details}}
-        <tr>
-          <td>{{.OrderDoDetailID}}</td>
-          <td style="padding: 6px 0;">{{.OrderDoNo}}</td>
-          <td>{{.OrderNo}}</td>
-          <td>{{.ItemName}}</td>
-          <td>{{.Measure}}</td>
-          <td>{{.Qty}}</td>
-          <td>{{.Price}}</td>
-          <td>{{.DocumentNumber}}</td>
-          {{if $.CanWrite}}
-
-<!-- <td class="text-end">
-  <button type="button" 
-          class="btn btn-sm btn-outline-danger"
-          onclick="delDetail('{{$.OrderDo.OrderDoID}}', '{{$.OrderDo.OrderDoNo}}', '{{.OrderDoDetailID}}', this)">
-    <i class="bi bi-trash"></i> Remove
-  </button>
-</td> -->
-<td class="text-center">
-    <!-- Mengirim form POST langsung ke route Go Anda -->
-    <form action="/orderdo/{{.OrderDo.OrderDoID}}/{{.OrderDo.OrderDoNo}}/details/{{.OrderDoDetailID}}/{{.OrderDoDetailNo}}/delete" 
-          method="POST" 
-          onsubmit="return confirm('Apakah Anda yakin ingin menghapus detail order ini?');" 
-          style="display: inline;">
-        
-        <button type="submit" class="btn btn-sm btn-outline-danger">
-            <i class="bi bi-trash"></i> Hapus
-        </button>
-    </form>
-</td>
-
-          {{end}}
+          <tr>
+            <td class="d-none">{{.OrderDoDetailID}}</td>
+            <td class="d-none" style="padding: 6px 0;">{{.OrderDoDetailNo}}</td>
+            <td>{{.OrderNo}}</td>
+            <td>{{.ProductID}} - {{.ItemName}}</td>
+            <td>{{.Measure}}</td>
+            <td>{{.Qty}}</td>
+            <td>{{.FormatPrice}}</td>
+            <td>{{.FormatTotal}}</td>
+  
+            <td>{{.DocumentNumber}}</td>
+            {{if $.CanWrite}}
+            <td class="text-end">
+              <button type="button" 
+                      class="btn btn-sm btn-outline-danger"
+                      onclick="delDetail('{{.OrderDoDetailID}}', '{{.OrderDoDetailNo}}', this)">
+                <i class="bi bi-trash"></i> Remove
+              </button>
+            </td>
+            {{end}}
         </tr>
-        {{else}}
-        <tr><td colspan="7" class="text-center text-muted py-3">No detail lines.</td></tr>
+          {{else}}
+        <tr>
+          <td colspan="9" class="text-center text-muted py-3">No detail lines.</td>
+        </tr>
         {{end}}
+
       </tbody>
+      <tfoot>
+        <tr class="fw-bold table-light">
+          <td colspan="5" class="text-end">Grand Total:</td>
+          <td>{{.OrderDo.GrandTotal}}</td>
+          <td></td><td></td>
+        </tr>
+      </tfoot>
     </table>
 
     {{if .CanWrite}}
     
     <hr>
 <h6>Add Detail Line</h6>
-<form method="POST" 
-      action="/orderdo/{{.OrderDo.OrderDoID}}/{{.OrderDo.OrderDoNo}}/details" 
-      class="row g-2" id="addDetailForm">
-
-  <div class="col-md-3 position-relative">
-    <label class="form-label small mb-0">Customer</label>
-    <input type="text" id="customerName" class="form-control form-control-sm" placeholder="Cari customer..." autocomplete="off">
-    <input type="hidden" id="customerID" name="customer_id_filter">
+<form action="/orderdo/{{.OrderDo.OrderDoID}}/{{.OrderDo.OrderDoNo}}/details" 
+      method="POST">
+<div clas="row">
+  
+    <div class="col-md-3 position-relative">
+      <label class="form-label small mb-0">Customer</label>
+      <input type="text" id="customerName" class="form-control form-control-sm" placeholder="Cari customer..." autocomplete="off">
+      <input 
+          type="hidden" 
+          id="customerID" 
+          name="customer_id_filter">
     <div id="customerSuggestions" class="ac-box"></div>
   </div>
+</div>
 
-  <div class="col-md-2 position-relative">
-    <label class="form-label small mb-0">Order No (PO)</label>
-    <input type="text" id="orderNoInput" class="form-control form-control-sm" placeholder="Cari PO..." autocomplete="off" required>
+<div class="row">
+  <div class="col-md-3 position-relative">
+    <td>
+      <label class="form-label small mb-0">Order No (PO)</label>
+      <input type="text" id="orderNoInput" class="form-control form-control-sm" placeholder="Cari PO..." autocomplete="off" required>
+      <div id="orderSuggestions" class="ac-box"></div>
+    </td>
+   
+    
     <input type="hidden" name="order_no" id="orderNoHidden">
     <input type="hidden" name="product_id" id="productIdHidden" required>
-    <input type="hidden" name="order_do_detail_id" id="detailIdHidden">
-    <div id="orderSuggestions" class="ac-box"></div>
+    <input type="hidden" name="order_do_dtid" id="detailIdHidden">
+ 
   </div>
 
-  <div class="col-md-2">
-    <label class="form-label small mb-0">Product Name</label>
-    <input type="text" id="productName" name="item_name" class="form-control form-control-sm" readonly>
+  <div class="col-md-3">
+    <td>
+        <label class="form-label small mb-0">Product Name</label>
+        <input type="text" id="productName" name="item_name" class="form-control form-control-sm" readonly>
+    </td>
+    
   </div>
 
   <div class="col-md-1">
@@ -181,14 +191,17 @@
     <input type="number" id="price" name="price" class="form-control form-control-sm" readonly>
   </div>
 
-  <div class="col-md-1">
+  <div class="col-md-2">
     <label class="form-label small mb-0">Doc No</label>
-    <input type="text" name="document_number" class="form-control form-control-sm" placeholder="Doc No">
+    <input type="text" id="document_number" name="document_number" class="form-control form-control-sm" placeholder="Doc No">
   </div>
 
   <div class="col-md-1 d-flex align-items-end">
     <button type="submit" class="btn btn-primary btn-sm w-100">Add</button>
+    
   </div>
+</div>
+  
 </form>
 
 <style>
@@ -208,21 +221,106 @@
 </style>
 
 <script>
+// ================= GLOBAL: bisa dipanggil dari onclick HTML =================
+window.delDetail = async function(orderDoDetailID, orderDoDetailNo, btnEl) {
+    const konfirmasi = confirm('Remove this line?');
+    if (!konfirmasi) return;
+
+    btnEl.disabled = true;
+    try {
+        // Path disesuaikan dengan prefix /api
+        const response = await fetch(`/orderdo/details/${orderDoDetailID}/${orderDoDetailNo}/delete`, {
+            method: 'POST',
+            credentials: 'same-origin'
+        });
+
+      if (response.status !== 204) {
+          const errText = await response.text();
+          throw new Error(errText || `HTTP ${response.status}`);
+      }
+
+        const row = btnEl.closest('tr');
+        if (row) row.remove();
+
+        if (typeof ui !== 'undefined' && ui.showToast) {
+            ui.showToast('Detail line removed');
+        }
+    } catch (error) {
+        console.error('Gagal menghapus detail:', error);
+        btnEl.disabled = false;
+        if (typeof ui !== 'undefined' && ui.showToast) {
+            ui.showToast('Gagal menghapus detail: ' + error.message);
+        } else {
+            alert('Gagal menghapus detail: ' + error.message);
+        }
+    }
+};
+
+async function addDetail(orderDoID, orderDoNo, formData) {
+    try {
+        const response = await fetch(`/orderdo/${orderDoID}/${orderDoNo}/details`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        });
+
+        // Validasi khusus untuk HTTP 201 Created
+        if (response.status !== 201) {
+            const errText = await response.text();
+            throw new Error(errText || `HTTP ${response.status}`);
+        }
+
+        // Sukses (HTTP 201)
+        if (typeof ui !== 'undefined' && ui.showToast) {
+            ui.showToast('Detail line added');
+        }
+        location.reload(); // Reload untuk menampilkan baris baru
+    } catch (error) {
+        console.error('Gagal menambah detail:', error);
+        alert(error.message);
+    }
+}
+
+function calculateGrandTotal() {
+  let total = 0;
+  document.querySelectorAll('#detailTable tbody tr').forEach(row => {
+    const lineTotalCell = row.querySelector('.line-total');
+    if (lineTotalCell) {
+      const val = parseFloat(lineTotalCell.textContent) || 0;
+      total += val;
+    }
+  });
+  document.getElementById('grandTotalCell').textContent = total.toFixed(2);
+}
+
+// Jalankan saat halaman selesai dimuat
+document.addEventListener('DOMContentLoaded', calculateGrandTotal);
+// ================= AUTOCOMPLETE (tetap dalam IIFE, tidak perlu global) =================
 (function () {
+  // No API_BASE needed anymore: these hit the web app's own proxy routes
+  // (relative paths, same-origin, cookie auth) instead of the backend
+  // directly. See handler/order_do_handler.go LookupCustomers/LookupOrders.
+
   const custNameInput = document.getElementById('customerName');
   const custIdHidden  = document.getElementById('customerID');
   const custBox       = document.getElementById('customerSuggestions');
 
-  const orderNoInput   = document.getElementById('orderNoInput');
-  const orderNoHidden  = document.getElementById('orderNoHidden');
-  const productIdHidden= document.getElementById('productIdHidden');
-  const productNameInp = document.getElementById('productName');
-  const measureInput   = document.getElementById('measure');
-  const qtyInput        = document.getElementById('qty');
-  const priceInput      = document.getElementById('price');
-  const orderBox        = document.getElementById('orderSuggestions');
+  const orderNoInput    = document.getElementById('orderNoInput');
+  const orderNoHidden   = document.getElementById('orderNoHidden');
+  const productIdHidden = document.getElementById('productIdHidden');
+  const productNameInp  = document.getElementById('productName');
+  const measureInput    = document.getElementById('measure');
+  const qtyInput         = document.getElementById('qty');
+  const priceInput       = document.getElementById('price');
+  const orderBox         = document.getElementById('orderSuggestions');
 
   let custTimer, orderTimer;
+
+  // Order No didisable sampai Customer dipilih (karena route wajib custID)
+  orderNoInput.disabled = true;
+  orderNoInput.placeholder = 'Pilih customer dulu...';
 
   function resetOrderFields() {
     orderNoHidden.value = '';
@@ -233,64 +331,30 @@
     priceInput.value = '';
   }
 
-async function delDetail(orderDoID, orderDoNo, orderDoDetailID, btnEl) {
-    const konfirmasi = confirm('Remove this line?');
-    if (!konfirmasi) return;
-
-    // disable tombol sementara biar tidak double-click saat request jalan
-    btnEl.disabled = true;
-
-    try {
-      
-        const token = localStorage.getItem('auth_token'); // atau sumber lain sesuai polamu
-        const response = await fetch(`/orderdo/details/${orderDoID}/${orderDoNo}/${orderDoDetailID}`, {
-        method: 'DELETE',
-        credentials: 'include', // aman disertakan meski pakai token juga
-        headers: {
-            'Authorization': token ? `Bearer ${token}` : undefined
-        }
-        });
-
-        if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(errText || `HTTP ${response.status}`);
-        }
-
-        // Hapus baris dari DOM langsung tanpa reload halaman
-        const row = btnEl.closest('tr');
-        if (row) row.remove();
-
-        // opsional: kalau ada fungsi toast/notifikasi di project ini
-        if (typeof ui !== 'undefined' && ui.showToast) {
-            ui.showToast('Detail line removed');
-        }
-
-    } catch (error) {
-        console.error('Gagal menghapus detail:', error);
-        btnEl.disabled = false; // aktifkan lagi tombolnya kalau gagal
-
-        if (typeof ui !== 'undefined' && ui.showToast) {
-            ui.showToast('Gagal menghapus detail: ' + error.message);
-        } else {
-            alert('Gagal menghapus detail: ' + error.message);
-        }
-    }
-}
-
   // ---------- Customer Autocomplete ----------
   custNameInput.addEventListener('input', () => {
     clearTimeout(custTimer);
     custIdHidden.value = '';
+    orderNoInput.disabled = true;
+    orderNoInput.placeholder = 'Pilih customer dulu...';
     const q = custNameInput.value.trim();
     if (!q) { custBox.style.display = 'none'; return; }
 
-    custTimer = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/customers/autocomplete?q=${encodeURIComponent(q)}`);
+  custTimer = setTimeout(async () => {
+    try {
+// Customer Autocomplete — proxied through the web app (same-origin, cookie auth)
+        const res = await fetch(`/orderdo/lookup/customers/${encodeURIComponent(q)}`, {
+            credentials: 'same-origin'
+        });
+        
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        renderCustomerSuggestions(data.results || []);
-      } catch (err) { console.error(err); }
+        renderCustomerSuggestions(data.results || data || []);
+        } catch (err) {
+          console.error('Customer autocomplete error:', err);
+        }
     }, 250);
+
   });
 
   function renderCustomerSuggestions(items) {
@@ -304,6 +368,9 @@ async function delDetail(orderDoID, orderDoNo, orderDoDetailID, btnEl) {
         custNameInput.value = cust.CustomerName;
         custIdHidden.value = cust.CustomerID;
         custBox.style.display = 'none';
+
+        orderNoInput.disabled = false;
+        orderNoInput.placeholder = 'Cari PO...';
         orderNoInput.value = '';
         resetOrderFields();
       });
@@ -317,17 +384,24 @@ async function delDetail(orderDoID, orderDoNo, orderDoDetailID, btnEl) {
     clearTimeout(orderTimer);
     resetOrderFields();
     const q = orderNoInput.value.trim();
-    if (!q) { orderBox.style.display = 'none'; return; }
+    const custID = custIdHidden.value;
+    if (!q || !custID) { orderBox.style.display = 'none'; return; }
 
-    orderTimer = setTimeout(async () => {
-      try {
-        const params = new URLSearchParams({ q });
-        if (custIdHidden.value) params.set('customer_id', custIdHidden.value);
-        const res = await fetch(`/api/orders/autocomplete?${params}`);
+orderTimer = setTimeout(async () => {
+    try {
+        // Order autocomplete — proxied through the web app (same-origin, cookie auth)
+        const res = await fetch(`/orderdo/lookup/orders/${encodeURIComponent(custID)}/${encodeURIComponent(q)}`, {
+            credentials: 'same-origin'
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        renderOrderSuggestions(data.results || []);
-      } catch (err) { console.error(err); }
-    }, 250);
+        renderOrderSuggestions(data.results || data || []);
+    } catch (err) {
+        console.error('Order autocomplete error:', err);
+    }
+}, 250);
+
+
   });
 
   function renderOrderSuggestions(items) {
@@ -345,7 +419,6 @@ async function delDetail(orderDoID, orderDoNo, orderDoDetailID, btnEl) {
         measureInput.value = row.Measure;
         qtyInput.value = row.Qty;
         priceInput.value = row.Price;
-        if (!custIdHidden.value) custIdHidden.value = row.CustomerID;
         orderBox.style.display = 'none';
       });
       orderBox.appendChild(div);

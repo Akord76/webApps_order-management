@@ -30,7 +30,7 @@
             <td>{{.OrderID}}</td>
             <td>{{.OrderNo}}</td>
             <td>{{if .OrderDate}}{{.OrderDate.Format "2006-01-02"}}{{end}}</td>
-            <td>{{.CustomerID}}</td>
+            <td>{{.CustomerID}}-{{.CustomerName}}</td>
             <td>{{.SupplierFrom}}</td>
             <td class="text-end">
               <a href="/orders/{{.OrderID}}/{{.OrderNo}}" class="btn btn-sm btn-outline-secondary">View</a>

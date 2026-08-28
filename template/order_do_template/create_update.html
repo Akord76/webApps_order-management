@@ -3,7 +3,7 @@
 <head>{{template "head" .}}</head>
 <body>
 {{template "navbar" .}}
-<div class="container" style="max-width: 1000px;">
+<div class="container" style="max-width: 1200px;">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3>{{if .IsEdit}}Edit Order Do{{else}}New Order Do{{end}}</h3>
     <a href="/orderdo" class="btn btn-outline-secondary">Back</a>
@@ -13,45 +13,62 @@
 
   <div class="card p-5">
     <form method="POST" action="{{if .IsEdit}}/orderdo/{{.OrderDo.OrderDoID}}/{{.OrderDo.OrderDoNo}}/edit{{else}}/orderdo/create{{end}}">
+      
+      <input type="hidden" name="order_do_id" value="{{.OrderDo.OrderDoID}}" {{if .IsEdit}}disabled{{end}}>
+
       <div class="row">
- 
-          <input type="hidden" name="order_do_id" class="form-control"
-                 value="{{.OrderDo.OrderDoID}}" {{if .IsEdit}}disabled{{end}}>
-  
-        <div class="col-md-3 mb-3">
+        <div class="col-md-2 mb-3">
           <label class="form-label">Order Do No</label>
           <input type="text" name="order_do_no" class="form-control" maxlength="50"
                  value="{{.OrderDo.OrderDoNo}}" {{if .IsEdit}}disabled{{end}} required>
         </div>
         <div class="col-md-3 mb-3">
           <label class="form-label">Order Do Date</label>
-          <input type="date" name="order_do_date" class="form-control"
+          <input type="date" name="order_do_date" class="form-control" 
                  value="{{if .OrderDo.OrderDoDate}}{{.OrderDo.OrderDoDate.Format "2006-01-02"}}{{end}}">
         </div>
-        <div class="col-md-5 mb-3">
-          <label class="form-label">Customer ID | Name</label>
-          <input type="text" name="customer_id" class="form-control" maxlength="50" value="{{.OrderDo.CustomerID}}">
+        <div class="col-md-4 mb-3 position-relative">
+          <label class="form-label">Customer</label>
+          <input type="text" id="customerSearch" 
+                 class="form-control" list="customerOptions"
+                 placeholder="Search customer by name" 
+                 autocomplete="off"
+                 value="{{range .Customers}}{{if eq .CustID $.OrderDo.CustomerID}}{{.CustName}}{{end}}{{end}}">
+          <datalist id="customerOptions">
+            {{range .Customers}}<option data-id="{{.CustID}}" value="{{.CustName}}"></option>{{end}}
+          </datalist>
+          <!-- Perbaikan: Gunakan $.OrderDo.CustomerID -->
+          <input type="hidden" 
+                 name="customer_id" 
+                 id="customerID" 
+                 value="{{.OrderDo.CustomerID}}">
+          <div class="form-text">Type to search, then pick a customer from the list.</div>
         </div>
-      </div>
-     
-      <div class="row">
-        <div class="col-md-4 mb-3">
+        <div class="col-md-3 mb-3">
           <label class="form-label">Shipment</label>
           <input type="text" name="shipment" class="form-control" maxlength="20" value="{{.OrderDo.Shipment}}">
         </div>
-        <div class="col-md-4 mb-3">
+      </div>
+
+      <div class="row">
+
+        <div class="col-md-2 mb-3">
           <label class="form-label">Ship Number</label>
           <input type="text" name="ship_number" class="form-control" maxlength="20" value="{{.OrderDo.ShipNumber}}">
         </div>
-        <div class="col-md-4 mb-3">
+        <div class="col-md-3 mb-3">
           <label class="form-label">Driver Number</label>
           <input type="text" name="driver_number" class="form-control" maxlength="20" value="{{.OrderDo.DriverNumber}}">
         </div>
-      </div>
-      <div class="mb-3">
+      <div class="col-md-7 mb-3">
         <label class="form-label">Description</label>
-        <input type="text" name="description" class="form-control" maxlength="100" value="{{.OrderDo.Description}}">
+        <textarea type="text" name="description" 
+                  class="form-control" maxlength="100" 
+                  value="{{.OrderDo.Description}}"> 
+        </textarea>
       </div>
+      </div>
+
 
       {{if not .IsEdit}}
       <hr>
@@ -65,62 +82,170 @@
             <th>Qty</th>
             <th>Price</th>
             <th>Doc Number</th>
+            <th width="50px">Action</th>
           </tr>
         </thead>
         <tbody id="detailRowsBody">
-          <tr>
+          <!-- Menggunakan class (bukan ID) agar mendukung Add Line bertingkat -->
+          <tr class="detail-row">
             <td>
-                <input type="text" id="orderNoInput" 
-                   name="order_no[]"
-                   class="form-control form-control-sm" 
-                   placeholder="Cari PO..." 
-                   autocomplete="off" required>
-                    <input type="hidden" name="order_no" id="orderNoHidden">
-                    <input type="hidden" name="product_id" id="productIdHidden" required>
-                    <input type="hidden" name="order_do_detail_id" id="detailIdHidden">
+              <input type="hidden" name="order_do_dtid[]" class="detail-id-inp">
+              <input type="hidden" name="product_id[]" class="product-id-inp">
+              <input type="text" 
+                      name="order_no[]" 
+                      class="form-control form-control-sm order-no-inp" 
+                      placeholder="Cari PO..." 
+                      autocomplete="off" 
+                      style="min-width: 220px;" 
+                      required>
+
+            <!-- <div class="ac-box list-group position-absolute w-100 shadow-sm" 
+                 style="display:none; 
+                 z-index:500; 
+                 max-height: 200px; 
+                 overflow-y: auto;">
+            </div> -->
+            <div class="ac-box"></div>
             </td>
-            
-            
-            <td><input type="text" name="item_name[]" class="form-control" maxlength="20" required></td>
-            <td><input type="text" name="measure[]" class="form-control" maxlength="20"></td>
-            <td><input type="number" name="qty[]" class="form-control" required></td>
-            <td><input type="number" step="0.01" name="price[]" class="form-control" required></td>
+            <td><input type="text" name="item_name[]" class="form-control form-control-sm item-name-inp" maxlength="100" style="min-width: 100px;" readonly></td>
+            <td><input type="text" name="measure[]" class="form-control form-control-sm measure-inp" style="min-width: 20px;" maxlength="20" readonly></td>
+            <td><input type="number" name="qty[]" class="form-control form-control-sm qty-inp" style="min-width: 20px;"></td>
+            <td><input type="number" step="0.01" name="price[]" class="form-control form-control-sm price-inp" readonly></td>
+            <td><input type="text" name="document_number[]" class="form-control form-control-sm document_number-inp"></td>
             <td><button type="button" class="btn btn-sm btn-outline-danger remove-row">&times;</button></td>
           </tr>
         </tbody>
       </table>
-      <button type="button" id="addRow" class="btn btn-sm btn-outline-secondary mb-3">+ Add Line</button>
-      {{else}}
+      <!-- Pembungkus Flexbox: + Add Line di kiri, Save/Cancel di kanan -->
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <button type="button" id="addRow" class="btn btn-sm btn-outline-secondary">+ Add Line</button>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary">
+          {{if .IsEdit}}Save Changes{{else}}Create{{end}}
+         </button>
+          <a href="/orderdo" class="btn btn-light">Cancel</a>
+        </div>
+      </div>
+          {{else}}
       <div class="alert alert-info">
         Detail lines are managed from the order Do's detail page after saving.
       </div>
-      {{end}}
-
-      <div>
+      <div class="text-end mt-3">
         <button type="submit" class="btn btn-primary">{{if .IsEdit}}Save Changes{{else}}Create{{end}}</button>
         <a href="/orderdo" class="btn btn-light">Cancel</a>
       </div>
+      {{end}}
+
     </form>
   </div>
 </div>
 
 {{if not .IsEdit}}
+<style>
+.ac-box {
+  position: absolute;
+  z-index: 20;
+  background: #fff;
+  border: 1px solid #ddd;
+  width: 50%;
+  max-height: 220px;
+  overflow-y: auto;
+  display: none;
+  box-shadow: 0 4px 8px rgba(0,0,0,.08);
+}
+.ac-item { padding: 6px 8px; cursor: pointer; font-size: .875rem; }
+.ac-item:hover { background: #f0f0f0; }
+</style>
+
 <script>
+// Handler Datalist Customer
+const customerSearch = document.getElementById('customerSearch');
+const customerID = document.getElementById('customerID');
+customerSearch.addEventListener('input', function() {
+  const opts = document.getElementById('customerOptions').options;
+  customerID.value = '';
+  for (let opt of opts) {
+    if (opt.value === this.value) {
+      customerID.value = opt.getAttribute('data-id');
+      break;
+    }
+  }
+});
+
+// Handler Dynamic Table Rows
 document.getElementById('addRow').addEventListener('click', function () {
-  var body = document.getElementById('detailRowsBody');
-  var row = body.rows[0].cloneNode(true);
-  row.querySelectorAll('input').forEach(function (input) { input.value = ''; });
-  body.appendChild(row);
+  const body = document.getElementById('detailRowsBody');
+  const firstRow = body.rows[0];
+  const newRow = firstRow.cloneNode(true);
+  
+  newRow.querySelectorAll('input').forEach(input => input.value = '');
+  newRow.querySelector('.ac-box').style.display = 'none';
+  body.appendChild(newRow);
 });
 
 document.getElementById('detailRowsBody').addEventListener('click', function (e) {
   if (e.target.classList.contains('remove-row')) {
-    var body = document.getElementById('detailRowsBody');
+    const body = document.getElementById('detailRowsBody');
     if (body.rows.length > 1) {
       e.target.closest('tr').remove();
     }
   }
 });
+
+// Handler Autocomplete Event Delegation (Mendukung baris dinamis)
+let orderTimer = null;
+document.getElementById('detailRowsBody').addEventListener('input', function(e) {
+  if (!e.target.classList.contains('order-no-inp')) return;
+
+  clearTimeout(orderTimer);
+  const inputEl = e.target;
+  const row = inputEl.closest('tr');
+  const acBox = row.querySelector('.ac-box');
+  const q = inputEl.value.trim();
+  const custID = customerID.value;
+
+  if (!q || !custID) { acBox.style.display = 'none'; return; }
+
+  orderTimer = setTimeout(async () => {
+    try {
+      const res = await fetch(`/orderdo/lookup/orders/${encodeURIComponent(custID)}/${encodeURIComponent(q)}`, {
+        credentials: 'same-origin'
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      renderSuggestions(data.results || data || [], row);
+    } catch (err) {
+      console.error('Order autocomplete error:', err);
+    }
+  }, 250);
+});
+
+function renderSuggestions(items, row) {
+  const acBox = row.querySelector('.ac-box');
+  acBox.innerHTML = '';
+  if (!items.length) { acBox.style.display = 'none'; return; }
+
+  items.forEach(item => {
+    const a = document.createElement('a');
+    a.className = 'list-group-item list-group-item-action py-1 px-2 small cursor-pointer';
+    a.textContent = `${item.OrderNo} — ${item.ProductName} (${item.Measure}, qty ${item.Qty})`;
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Mengisi semua input form dari data autocomplete
+      row.querySelector('.order-no-inp').value = item.OrderNo;
+      row.querySelector('.product-id-inp').value = item.ProductID;
+      row.querySelector('.item-name-inp').value = item.ProductName;
+      row.querySelector('.measure-inp').value = item.Measure;
+      row.querySelector('.qty-inp').value = item.Qty;
+      row.querySelector('.price-inp').value = item.Price;
+      acBox.style.display = 'none';
+    });
+    acBox.appendChild(a);
+  });
+  acBox.style.display = 'block';
+}
 </script>
 {{end}}
 
