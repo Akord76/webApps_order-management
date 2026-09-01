@@ -1,7 +1,7 @@
 {{define "head"}}
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{.Title}} - Order Management System</title>
+<title>{{.Title}} - Order Management</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
   body { background-color: #f5f6f8; }
@@ -15,7 +15,7 @@
 {{define "navbar"}}
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
   <div class="container-fluid">
-    <a class="navbar-brand" href="/">Order Management System</a>
+    <a class="navbar-brand" href="/">Order Management</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -27,29 +27,18 @@
         <li class="nav-item"><a class="nav-link" href="/employees">Employees</a></li>
         <li class="nav-item"><a class="nav-link" href="/suppliers">Suppliers</a></li>
         <li class="nav-item"><a class="nav-link" href="/orders">Orders</a></li>
-        <li class="nav-item"><a class="nav-link" href="/orderdo">Delivery Orders</a></li>
-        <li class="nav-item"><a class="nav-link" href="/sharing-profits">Sharing Profit</a></li>
+        <li class="nav-item"><a class="nav-link" href="/orderdo">Order Sales</a></li>
         {{if eq .Role "ADMIN"}}
         <li class="nav-item"><a class="nav-link" href="/users">Users</a></li>
-        <li class="nav-item"><a class="nav-link" href="/config-company-profiles">Company Settings</a></li>
-        <li class="nav-item"><a class="nav-link" href="/commitmentfees">Commitment Fee Config</a></li>
         {{end}}
       </ul>
       <ul class="navbar-nav ms-auto">
         {{if .Username}}
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-              {{.Username}} ({{.Role}})
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="/change-password">Change Password</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li>
-                <form method="POST" action="/logout" class="px-3">
-                  <button type="submit" class="btn btn-sm btn-outline-danger w-100">Logout</button>
-                </form>
-              </li>
-            </ul>
+          <li class="nav-item"><span class="nav-link disabled">{{.Username}} ({{.Role}})</span></li>
+          <li class="nav-item">
+            <form method="POST" action="/logout" class="d-inline">
+              <button type="submit" class="btn btn-sm btn-outline-light">Logout</button>
+            </form>
           </li>
         {{else}}
           <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
@@ -63,7 +52,7 @@
 {{define "footer"}}
 <footer class="container mt-5 mb-4 text-center">
   <hr>
-  <p>Order Management System Web App</p>
+  <p>Order Management Web App</p>
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 {{end}}

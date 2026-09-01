@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>{{template "head" .}}</head>
+<body>
+{{template "navbar" .}}
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Sharing Profit</h3>
+    {{if .CanWrite}}<a href="/sharing-profits/create" class="btn btn-primary">+ New Record</a>{{end}}
+  </div>
+
+  {{template "alerts" .}}
+
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Num</th>
+            <th>ID</th>
+            <th>Commitment ID</th>
+            <th>Order Sale Detail ID</th>
+            <th>Share Value</th>
+            {{if .CanWrite}}<th class="text-end">Actions</th>{{end}}
+          </tr>
+        </thead>
+        <tbody>
+          {{range .SharingProfits}}
+          <tr>
+            <td>{{.SharingProfitNum}}</td>
+            <td>{{.SharingProfitID}}</td>
+            <td>{{if .CommitmentID}}{{.CommitmentID}}{{else}}-{{end}}</td>
+            <td>{{.OrderDoNo}}</td>
+            <td>{{.ShareValue}}</td>
+            {{if $.CanWrite}}
+            <td class="text-end">
+              <a href="/sharing-profits/{{.SharingProfitNum}}/{{.SharingProfitID}}" class="btn btn-sm btn-outline-secondary">View</a>
+              <a href="/sharing-profits/{{.SharingProfitNum}}/{{.SharingProfitID}}/edit" class="btn btn-sm btn-outline-primary">Edit</a>
+              <form method="POST" action="/sharing-profits/{{.SharingProfitNum}}/{{.SharingProfitID}}/delete" class="d-inline"
+                    onsubmit="return confirm('Delete this record?');">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+              </form>
+            </td>
+            {{end}}
+          </tr>
+          {{else}}
+          <tr><td colspan="6" class="text-center text-muted py-4">No records found.</td></tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{{template "footer" .}}
+</body>
+</html>

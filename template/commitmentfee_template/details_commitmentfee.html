@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>{{template "head" .}}</head>
+<body>
+{{template "navbar" .}}
+<div class="container" style="max-width: 640px;">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Commitment Fee Detail</h3>
+    <a href="/commitmentfees" class="btn btn-outline-secondary">Back</a>
+  </div>
+
+  {{template "alerts" .}}
+
+  <div class="card p-4">
+    <dl class="row mb-0">
+      <dt class="col-sm-4">Commitment Fee</dt>
+      <dd class="col-sm-8">{{.CommitmentFee.CommitmentID}}</dd>
+
+      <dt class="col-sm-4">Commitment ID</dt>
+      <dd class="col-sm-8">{{.CommitmentFee.CommitmentID}}</dd>
+	<!-- CommitmentID       int     `json:"commitment_id"`
+	EmployeeCardNumber *int    `json:"employee_card_number"`//di ambil dari employee (Autocomplete)
+	CommitmentValue    float64 `json:"commitment_value"`
+	ParameterFee       *int    `json:"parameter_fee"`
+	ProductID          string  `json:"product_id"`//diambil dari table -->
+      <dt class="col-sm-4">Employee CardNumber</dt>
+      <dd class="col-sm-8">{{.CommitmentFee.EmployeeCardNumber}}</dd>
+
+      <dt class="col-sm-4">Commitment Value</dt>
+      <dd class="col-sm-8">{{.CommitmentFee.CommitmentValue}}</dd>
+
+      <dt class="col-sm-4">Item Name</dt>
+      <dd class="col-sm-8">{{.CommitmentFee.ProductID}} - {{.CommitmentFee.ProductName}}</dd>
+    </dl>
+    {{if .CanWrite}}
+    <div class="mt-3">
+      <a href="/commitmentfees/{{.CommitmentFee.CommitmentID}}/edit" 
+        class="btn btn-primary">Edit</a>
+      <form method="POST" 
+            action="/commitmentfees/{{.CommitmentFee.CommitmentID}}/delete" 
+            class="d-inline"
+            onsubmit="return confirm('Delete this record?');">
+        <button type="submit" class="btn btn-danger">Delete</button>
+      </form>
+    </div>
+    {{end}}
+  </div>
+</div>
+{{template "footer" .}}
+</body>
+</html>

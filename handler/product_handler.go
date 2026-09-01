@@ -75,9 +75,12 @@ func (h *ProductHandler) Create(c *gin.Context) {
 		data := baseData(c, "New Product")
 		data["IsEdit"] = false
 		data["Product"] = model.Product{
-			ProductNumber: productNumber, ProductID: c.PostForm("product_id"),
-			ProductName: c.PostForm("product_name"), Measure: c.PostForm("measure"),
-			Description: c.PostForm("description"), DocumentNumber: c.PostForm("document_number"),
+			ProductNumber: productNumber, 
+			ProductID: c.PostForm("product_id"),
+			ProductName: c.PostForm("product_name"), 
+			Measure: c.PostForm("measure"),
+			Description: c.PostForm("description"), 
+			DocumentNumber: c.PostForm("document_number"),
 		}
 		data["Error"] = "Failed to create product: " + err.Error()
 		c.HTML(http.StatusOK, "product_template/create_update.html", data)

@@ -14,15 +14,18 @@ import (
 
 // Handlers bundles every page handler the router needs.
 type Handlers struct {
-	Auth     *handler.AuthHandler
-	User     *handler.UserHandler
-	Category *handler.CategoryHandler
-	Product  *handler.ProductHandler
-	Customer *handler.CustomerHandler
-	Employee *handler.EmployeeHandler
-	Supplier *handler.SupplierHandler
-	Order    *handler.OrderHandler
-	OrderDo  *handler.OrderDoHandler
+	Auth                 *handler.AuthHandler
+	User                 *handler.UserHandler
+	Category             *handler.CategoryHandler
+	Product              *handler.ProductHandler
+	Customer             *handler.CustomerHandler
+	Employee             *handler.EmployeeHandler
+	Supplier             *handler.SupplierHandler
+	Order                *handler.OrderHandler
+	OrderDo              *handler.OrderDoHandler
+	ConfigCompanyProfile *handler.ConfigCompanyProfileHandler
+	SharingProfit        *handler.SharingProfitHandler
+	CommitmentFee        *handler.CommitmentFeeHandler
 }
 
 // SetupRouter wires every page route.
@@ -35,11 +38,8 @@ type Handlers struct {
 func SetupRouter(jwtSecret, cookieName string, h *Handlers) *gin.Engine {
 	r := gin.Default()
 
-	// Custom loader: every template is addressed by its path relative to
-	// template/ (e.g. "category_template/create_update.html"), which keeps
-	// same-named files across modules (create_update.html appears in every
-	// module folder) from colliding the way html/template's default
-	// basename-only naming would.
+	r.Static("/static", "./static") // rute URL "/static" diarahkan ke direktori "./static"
+
 	// 1. WAJIB: Daftarkan FuncMap SEBELUM LoadHTMLGlob!
 	r.SetFuncMap(template.FuncMap{
 		"formatOrderDoPrice": func(amount float64) string {
@@ -90,6 +90,36 @@ func SetupRouter(jwtSecret, cookieName string, h *Handlers) *gin.Engine {
 		users.POST("/:id/delete", h.User.Delete)
 	}
 
+	// Company Profile Settings — ADMIN only.
+	configProfiles := protected.Group("/config-company-profiles")
+	configProfiles.Use(middleware.RequireRoles(middleware.RoleAdmin))
+	{
+		configProfiles.GET("", h.ConfigCompanyProfile.List)
+		configProfiles.GET("/create", h.ConfigCompanyProfile.ShowCreate)
+		configProfiles.POST("/create", h.ConfigCompanyProfile.Create)
+		configProfiles.GET("/:id", h.ConfigCompanyProfile.Detail)
+		configProfiles.GET("/:id/edit", h.ConfigCompanyProfile.ShowEdit)
+		configProfiles.POST("/:id/edit", h.ConfigCompanyProfile.Update)
+		configProfiles.POST("/:id/delete", h.ConfigCompanyProfile.Delete)
+	}
+
+	commitmentFee := protected.Group("/commitmentfees")
+	commitmentFee.Use(middleware.RequireRoles(middleware.RoleAdmin))
+	{
+		// Autocomplete endpoints
+		commitmentFee.GET("/employees/search", h.CommitmentFee.EmployeeAutocomplete)
+		commitmentFee.GET("/products/search", h.CommitmentFee.ProductAutocomplete)
+
+		// CRUD endpoints
+		commitmentFee.GET("", h.CommitmentFee.List)
+		commitmentFee.GET("/create", h.CommitmentFee.ShowCreate)
+		commitmentFee.POST("/create", h.CommitmentFee.Create)
+		commitmentFee.GET("/:id", h.CommitmentFee.Detail)
+		commitmentFee.GET("/:id/edit", h.CommitmentFee.ShowEdit)
+		commitmentFee.POST("/:id/edit", h.CommitmentFee.Update)
+		commitmentFee.POST("/:id/delete", h.CommitmentFee.Delete)
+	}
+
 	// Master data — any authenticated role.
 	categories := protected.Group("/categories")
 	{
@@ -104,6 +134,7 @@ func SetupRouter(jwtSecret, cookieName string, h *Handlers) *gin.Engine {
 
 	products := protected.Group("/products")
 	{
+
 		products.GET("", h.Product.List)
 		products.GET("/create", h.Product.ShowCreate)
 		products.POST("/create", h.Product.Create)
@@ -207,6 +238,24 @@ func SetupRouter(jwtSecret, cookieName string, h *Handlers) *gin.Engine {
 			// forwards to the backend with the server-held Bearer token.
 			write.GET("/lookup/customers/:custName", h.OrderDo.LookupCustomers)
 			write.GET("/lookup/orders/:custID/:query", h.OrderDo.LookupOrders)
+		}
+	}
+
+	// Sharing Profit — everyone can view, ADMIN/MANAGER can write (matches
+	// the backend's /api/sharing-profits role split).
+	sharingProfits := protected.Group("/sharing-profits")
+	{
+		sharingProfits.GET("", h.SharingProfit.List)
+		sharingProfits.GET("/:num/:id", h.SharingProfit.Detail)
+
+		spWrite := sharingProfits.Group("")
+		spWrite.Use(middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager))
+		{
+			spWrite.GET("/create", h.SharingProfit.ShowCreate)
+			spWrite.POST("/create", h.SharingProfit.Create)
+			spWrite.GET("/:num/:id/edit", h.SharingProfit.ShowEdit)
+			spWrite.POST("/:num/:id/edit", h.SharingProfit.Update)
+			spWrite.POST("/:num/:id/delete", h.SharingProfit.Delete)
 		}
 	}
 
