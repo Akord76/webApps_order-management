@@ -1,0 +1,32 @@
+        .autocomplete-wrapper {
+            position: relative;
+            width: 350px;
+        }
+        .suggestions-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #ccc;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: none;
+        }
+        .suggestions-list li {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .suggestions-list li:hover {
+            background-color: #f0f0f0;
+        }
+        .suggestions-list .email {
+            font-size: 0.85em;
+            color: #666;
+            display: block;
+        }

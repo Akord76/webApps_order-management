@@ -12,7 +12,8 @@
   {{template "alerts" .}}
 
   <div class="card p-4">
-    <form method="POST" action="{{if .IsEdit}}/config-company-profiles/{{.Config.ConfigID}}/edit{{else}}/config-company-profiles/create{{end}}">
+    <form method="POST" 
+          action="{{if .IsEdit}}/config-company-profiles/{{.Config.ConfigID}}/edit{{else}}/config-company-profiles/create{{end}}">
       <div class="mb-3">
         <label class="form-label">Config ID</label>
         <input type="text" name="config_id" class="form-control"

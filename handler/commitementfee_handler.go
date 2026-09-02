@@ -48,16 +48,20 @@ func (h *CommitmentFeeHandler) List(c *gin.Context) {
 }
 
 func (h *CommitmentFeeHandler) Detail(c *gin.Context) {
-	path := "/commitmentfees/" + "/" + c.Param("id")
 
-	var sp model.CommitmentFee
-	if err := h.api.Get(path, token(c), &sp); err != nil {
+	comID := c.Param("comID")
+	path := "/commitmentfees/" + comID
+
+	var response struct {
+		Data model.CommitmentFee `json:"data"` // sesuaikan key json dengan respon Postman
+	}
+	if err := h.api.Get(path, token(c), &response); err != nil {
 		c.Redirect(http.StatusFound, "/commitmentfees?err="+url.QueryEscape("Commitment Fee record not found"))
 		return
 	}
 
 	data := baseData(c, "Commitment Fee Detail")
-	data["CommitmentFee"] = sp
+	data["CommitmentFee"] = response.Data // <-- Ambil dari field Data
 	c.HTML(http.StatusOK, "commitmentfee_template/details_commitmentfee.html", data)
 }
 
@@ -120,28 +124,35 @@ func (h *CommitmentFeeHandler) Create(c *gin.Context) {
 }
 
 func (h *CommitmentFeeHandler) ShowEdit(c *gin.Context) {
-	path := "/commitmentfees/" + c.Param("num")
+	path := "/commitmentfees/" + c.Param("comID")
 
-	var sp model.CommitmentFee
-	if err := h.api.Get(path, token(c), &sp); err != nil {
+	// 1. Buat struct wrapper jika API Anda membungkus datanya di dalam key "data"
+	var response struct {
+		Data model.CommitmentFee `json:"data"` // sesuaikan key json dengan respon Postman
+	}
+
+	// 2. Panggil API menggunakan wrapper response
+	if err := h.api.Get(path, token(c), &response); err != nil {
 		c.Redirect(http.StatusFound, "/commitmentfees?err="+url.QueryEscape("Commitment Fee record not found"))
 		return
 	}
 
+	// 3. Masukkan objek asli (response.Data) ke template
 	data := baseData(c, "Edit Commitment Fee")
 	data["IsEdit"] = true
-	data["CommitmentFee"] = sp
+	data["CommitmentFee"] = response.Data // <-- Ambil dari field Data
+
 	c.HTML(http.StatusOK, "commitmentfee_template/create_update.html", data)
 }
 
 func (h *CommitmentFeeHandler) Update(c *gin.Context) {
-	num := c.Param("num")
-	path := "/commitmentfees/" + num
+	comID := c.Param("comID")
+	path := "/commitmentfees/" + comID
 
 	body := h.formBody(c)
 
 	if err := h.api.Put(path, token(c), body, nil); err != nil {
-		comID, _ := strconv.Atoi(num)
+		comID, _ := strconv.Atoi(comID)
 		data := baseData(c, "Edit Commitment Fee")
 		data["IsEdit"] = true
 		data["CommitmentFee"] = model.CommitmentFee{CommitmentID: comID}
@@ -154,7 +165,7 @@ func (h *CommitmentFeeHandler) Update(c *gin.Context) {
 }
 
 func (h *CommitmentFeeHandler) Delete(c *gin.Context) {
-	path := "/commitmentfees/" + c.Param("num")
+	path := "/commitmentfees/" + c.Param("comID")
 
 	if err := h.api.Delete(path, token(c)); err != nil {
 		c.Redirect(http.StatusFound, "/commitmentfees?err="+url.QueryEscape("Failed to delete Commitment Fee record: "+err.Error()))

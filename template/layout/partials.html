@@ -21,20 +21,50 @@
     </button>
     <div class="collapse navbar-collapse" id="navMenu">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link" href="/categories">Categories</a></li>
-        <li class="nav-item"><a class="nav-link" href="/products">Products</a></li>
-        <li class="nav-item"><a class="nav-link" href="/customers">Customers</a></li>
-        <li class="nav-item"><a class="nav-link" href="/employees">Employees</a></li>
-        <li class="nav-item"><a class="nav-link" href="/suppliers">Suppliers</a></li>
-        <li class="nav-item"><a class="nav-link" href="/orders">Orders</a></li>
-        <li class="nav-item"><a class="nav-link" href="/orderdo">Delivery Orders</a></li>
-        <li class="nav-item"><a class="nav-link" href="/sharing-profits">Sharing Profit</a></li>
+        
+        <!-- Master Data Dropdown -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="masterDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Master Data
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="masterDropdown">
+            <li><a class="dropdown-item" href="/categories">Categories</a></li>
+            <li><a class="dropdown-item" href="/products">Products</a></li>
+            <li><a class="dropdown-item" href="/customers">Customers</a></li>
+            <li><a class="dropdown-item" href="/employees">Employees</a></li>
+            <li><a class="dropdown-item" href="/suppliers">Suppliers</a></li>
+          </ul>
+        </li>
+
+        <!-- Transaction Data Dropdown -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="transactionDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Transaction Data
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="transactionDropdown">
+            <li><a class="dropdown-item" href="/orders">Orders</a></li>
+            <li><a class="dropdown-item" href="/orderdo">Delivery Orders</a></li>
+            <li><a class="dropdown-item" href="/sharing-profits">Sharing Profit</a></li>
+          </ul>
+        </li>
+
+        <!-- Configuration Data Dropdown (ADMIN Only) -->
         {{if eq .Role "ADMIN"}}
-        <li class="nav-item"><a class="nav-link" href="/users">Users</a></li>
-        <li class="nav-item"><a class="nav-link" href="/config-company-profiles">Company Settings</a></li>
-        <li class="nav-item"><a class="nav-link" href="/commitmentfees">Commitment Fee Config</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="configDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Configuration Data
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="configDropdown">
+            <li><a class="dropdown-item" href="/users">Users Management</a></li>
+            <li><a class="dropdown-item" href="/config-company-profiles">Company Settings</a></li>
+            <li><a class="dropdown-item" href="/commitmentfees">Commitment Fee Config</a></li>
+          </ul>
+        </li>
         {{end}}
+
       </ul>
+
+      <!-- User Menu Profile / Login -->
       <ul class="navbar-nav ms-auto">
         {{if .Username}}
           <li class="nav-item dropdown">
@@ -45,7 +75,7 @@
               <li><a class="dropdown-item" href="/change-password">Change Password</a></li>
               <li><hr class="dropdown-divider"></li>
               <li>
-                <form method="POST" action="/logout" class="px-3">
+                <form method="POST" action="/logout" class="px-3 py-1">
                   <button type="submit" class="btn btn-sm btn-outline-danger w-100">Logout</button>
                 </form>
               </li>

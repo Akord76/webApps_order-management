@@ -18,8 +18,8 @@
           <tr>
             <th>Num</th>
             <th>ID</th>
-            <th>Commitment ID</th>
-            <th>Order Sale Detail ID</th>
+            <th>Employee Card Number</th>
+            <th>Order Do ID</th>
             <th>Share Value</th>
             {{if .CanWrite}}<th class="text-end">Actions</th>{{end}}
           </tr>
@@ -29,7 +29,7 @@
           <tr>
             <td>{{.SharingProfitNum}}</td>
             <td>{{.SharingProfitID}}</td>
-            <td>{{if .CommitmentID}}{{.CommitmentID}}{{else}}-{{end}}</td>
+            <td>{{if .EmployeeCardNumber}}{{.EmployeeCardNumber}}{{else}}-{{end}}</td>
             <td>{{.OrderDoNo}}</td>
             <td>{{.ShareValue}}</td>
             {{if $.CanWrite}}

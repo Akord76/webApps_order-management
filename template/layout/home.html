@@ -3,24 +3,46 @@
 <head>{{template "head" .}}</head>
 <body>
 {{template "navbar" .}}
-<div class="container">
-  <div class="card p-5">
-    <h2>Welcome, {{.Username}}</h2>
-    <p class="text-muted">Signed in as <strong>{{.Role}}</strong>.</p>
-    <div class="row mt-4 g-3">
-      <div class="col-md-3"><a href="/categories" class="btn btn-outline-primary w-100">Categories</a></div>
-      <div class="col-md-3"><a href="/products" class="btn btn-outline-primary w-100">Products</a></div>
-      <div class="col-md-3"><a href="/customers" class="btn btn-outline-primary w-100">Customers</a></div>
-      <div class="col-md-3"><a href="/employees" class="btn btn-outline-primary w-100">Employees</a></div>
-      <div class="col-md-3"><a href="/suppliers" class="btn btn-outline-primary w-100">Suppliers</a></div>
-      <div class="col-md-3"><a href="/orders" class="btn btn-outline-primary w-100">Orders</a></div>
-      <div class="col-md-3"><a href="/orderdo" class="btn btn-outline-primary w-100">Order Sales</a></div>
-      {{if eq .Role "ADMIN"}}
-      <div class="col-md-3"><a href="/users" class="btn btn-outline-primary w-100">User Management</a></div>
-      <div class="col-md-3"><a href="/config-company-profiles" class="btn btn-outline-primary w-100">Company's Profil Config</a></div>
-      <div class="col-md-3"><a href="/commitmentfees" class="btn btn-outline-primary w-100">Commitment Fee Config</a></div>
-      {{end}}
+<div class="container my-4">
+  <div class="card p-4 shadow-sm">
+    <div class="mb-4">
+      <h2>Welcome, {{.Username}}</h2>
+      <p class="text-muted">Signed in as <strong>{{.Role}}</strong>.</p>
     </div>
+
+    <!-- Master Data Section -->
+    <div class="mb-4">
+      <h5 class="text-primary border-bottom pb-2 fw-bold">Master Data</h5>
+      <div class="row g-3 mt-1">
+        <div class="col-md-3"><a href="/categories" class="btn btn-outline-primary w-100">Categories</a></div>
+        <div class="col-md-3"><a href="/products" class="btn btn-outline-primary w-100">Products</a></div>
+        <div class="col-md-3"><a href="/customers" class="btn btn-outline-primary w-100">Customers</a></div>
+        <div class="col-md-3"><a href="/employees" class="btn btn-outline-primary w-100">Employees</a></div>
+        <div class="col-md-3"><a href="/suppliers" class="btn btn-outline-primary w-100">Suppliers</a></div>
+      </div>
+    </div>
+
+    <!-- Transaction Data Section -->
+    <div class="mb-4">
+      <h5 class="text-success border-bottom pb-2 fw-bold">Transaction Data</h5>
+      <div class="row g-3 mt-1">
+        <div class="col-md-3"><a href="/orders" class="btn btn-outline-success w-100">Orders</a></div>
+        <div class="col-md-3"><a href="/orderdo" class="btn btn-outline-success w-100">Order Sales</a></div>
+      </div>
+    </div>
+
+    <!-- Configuration Data Section -->
+    {{if eq .Role "ADMIN"}}
+    <div class="mb-2">
+      <h5 class="text-warning border-bottom pb-2 fw-bold">Configuration Data</h5>
+      <div class="row g-3 mt-1">
+        <div class="col-md-3"><a href="/users" class="btn btn-outline-warning w-100 text-dark">User Management</a></div>
+        <div class="col-md-3"><a href="/config-company-profiles" class="btn btn-outline-warning w-100 text-dark">Company's Profile Config</a></div>
+        <div class="col-md-3"><a href="/commitmentfees" class="btn btn-outline-warning w-100 text-dark">Commitment Fee Config</a></div>
+      </div>
+    </div>
+    {{end}}
+
   </div>
 </div>
 {{template "footer" .}}

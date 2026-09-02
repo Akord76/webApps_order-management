@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    /**
+ /**
  * Autocomplete untuk Products
  */
 function initProductAutocomplete(options = {}) {
@@ -75,7 +75,7 @@ function initProductAutocomplete(options = {}) {
     }
 
 async function fetchProductSuggestions(q, dropdownList, cfg) {
-    // try {
+    try {
         const token = localStorage.getItem('token') || sessionStorage.getItem('token');
         const res = await fetch(`${cfg.searchUrl}?q=${encodeURIComponent(q.trim())}`, {
             method: 'GET',
@@ -100,10 +100,10 @@ async function fetchProductSuggestions(q, dropdownList, cfg) {
         const productList = responseData.results || responseData.data || [];
 
         renderProductSuggestions(productList, dropdownList);
-    // } catch (err) {
-    //     console.error("Gagal melakukan fetch autocomplete produk:", err);
-    //     hideSuggestions(dropdownList);
-    // }
+    } catch (err) {
+        console.error("Gagal melakukan fetch autocomplete produk:", err);
+        hideSuggestions(dropdownList);
+    }
 }
     function renderProductSuggestions(products, dropdownList) {
         dropdownList.innerHTML = '';

@@ -3,11 +3,11 @@ package model
 type CommitmentFee struct {
 	CommitmentID       int `json:"commitment_id"`
 	EmployeeCardNumber int `json:"employee_card_number"` //di ambil dari employee (Autocomplete)
-	//CompleteName 	   string  `json:"complete_name"`
-	CommitmentValue float64 `json:"commitment_value"`
-	ParameterFee    int     `json:"parameter_fee"`
-	ProductID       string  `json:"product_id"` //diambil dari table product
-	//ProductName  	   string `json:"product_name"`
+	CompleteName 	   string  `json:"complete_name"`
+	CommitmentValue 	float64 `json:"commitment_value"`
+	ParameterFee    	int     `json:"parameter_fee"`
+	ProductID       	string  `json:"product_id"` //diambil dari table product
+	ProductName  	   string `json:"product_name"`
 }
 
 // Struct untuk mendaratkan response dari API backend

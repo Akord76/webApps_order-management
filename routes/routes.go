@@ -114,10 +114,10 @@ func SetupRouter(jwtSecret, cookieName string, h *Handlers) *gin.Engine {
 		commitmentFee.GET("", h.CommitmentFee.List)
 		commitmentFee.GET("/create", h.CommitmentFee.ShowCreate)
 		commitmentFee.POST("/create", h.CommitmentFee.Create)
-		commitmentFee.GET("/:id", h.CommitmentFee.Detail)
-		commitmentFee.GET("/:id/edit", h.CommitmentFee.ShowEdit)
-		commitmentFee.POST("/:id/edit", h.CommitmentFee.Update)
-		commitmentFee.POST("/:id/delete", h.CommitmentFee.Delete)
+		commitmentFee.GET("/:comID", h.CommitmentFee.Detail)
+		commitmentFee.GET("/:comID/edit", h.CommitmentFee.ShowEdit)
+		commitmentFee.POST("/:comID/edit", h.CommitmentFee.Update)
+		commitmentFee.POST("/:comID/delete", h.CommitmentFee.Delete)
 	}
 
 	// Master data — any authenticated role.
@@ -253,11 +253,22 @@ func SetupRouter(jwtSecret, cookieName string, h *Handlers) *gin.Engine {
 		{
 			spWrite.GET("/create", h.SharingProfit.ShowCreate)
 			spWrite.POST("/create", h.SharingProfit.Create)
-			spWrite.GET("/:num/:id/edit", h.SharingProfit.ShowEdit)
+			spWrite.GET("/:num/:id/edit", h.SharingProfit.ShowEditForm)
 			spWrite.POST("/:num/:id/edit", h.SharingProfit.Update)
 			spWrite.POST("/:num/:id/delete", h.SharingProfit.Delete)
 		}
 	}
+
+// spGroup := r.Group("/sharing-profits", middleware.RequireAuth())
+// {
+//     spGroup.GET("", h.SharingProfit.List)
+//     spGroup.GET("/create", h.SharingProfit.ShowCreateForm)
+//     spGroup.POST("/create", h.SharingProfit.Create)
+    
+//     // Route Edit & Update
+//     spGroup.GET("/:num/:id/edit", h.SharingProfit.ShowEditForm)
+//     spGroup.POST("/:num/:id/edit", h.SharingProfit.Update)
+// }
 
 	return r
 }
