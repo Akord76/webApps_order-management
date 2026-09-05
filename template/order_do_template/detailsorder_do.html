@@ -37,6 +37,10 @@
                         <td style="font-weight: bold; padding: 6px 0;">Customer ID</td><td>:</td>
                         <td style="padding: 6px 0;">{{.OrderDo.CustomerID}}</td>
                     </tr>
+                    <tr>
+                        <td style="font-weight: bold; padding: 6px 0;">Employee PIC</td><td>:</td>
+                        <td style="padding: 6px 0;">{{.OrderDo.EmployeeCardNumber}}</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -99,7 +103,7 @@
         {{range .OrderDo.Details}}
           <tr>
             <td class="d-none">{{.OrderDoDetailID}}</td>
-            <td class="d-none" style="padding: 6px 0;">{{.OrderDoDetailNo}}</td>
+            <td class="d-none" style="padding: 6px 0;">{{.OrderDoNo}}</td>
             <td>{{.OrderNo}}</td>
             <td>{{.ProductID}} - {{.ItemName}}</td>
             <td>{{.Measure}}</td>
@@ -112,7 +116,7 @@
             <td class="text-end">
               <button type="button" 
                       class="btn btn-sm btn-outline-danger"
-                      onclick="delDetail('{{.OrderDoDetailID}}', '{{.OrderDoDetailNo}}', this)">
+                      onclick="delDetail('{{.OrderDoDetailID}}', '{{.OrderDoNo}}', this)">
                 <i class="bi bi-trash"></i> Remove
               </button>
             </td>

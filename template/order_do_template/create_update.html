@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>{{template "head" .}}</head>
+<head>{{template "head" .}}
+<style>
+.ac-box {
+  position: absolute;
+  z-index: 20;
+  background: #fff;
+  border: 1px solid #ddd;
+  width: 50%;
+  max-height: 220px;
+  overflow-y: auto;
+  display: none;
+  box-shadow: 0 4px 8px rgba(0,0,0,.08);
+}
+.ac-item { padding: 6px 8px; cursor: pointer; font-size: .875rem; }
+.ac-item:hover { background: #f0f0f0; }
+</style>
+</head>
 <body>
 {{template "navbar" .}}
 <div class="container" style="max-width: 1200px;">
@@ -22,12 +38,12 @@
           <input type="text" name="order_do_no" class="form-control" maxlength="50"
                  value="{{.OrderDo.OrderDoNo}}" {{if .IsEdit}}disabled{{end}} required>
         </div>
-        <div class="col-md-3 mb-3">
+        <div class="col-md-2 mb-3">
           <label class="form-label">Order Do Date</label>
           <input type="date" name="order_do_date" class="form-control" 
                  value="{{if .OrderDo.OrderDoDate}}{{.OrderDo.OrderDoDate.Format "2006-01-02"}}{{end}}">
         </div>
-        <div class="col-md-4 mb-3 position-relative">
+        <div class="col-md-3 mb-3 position-relative">
           <label class="form-label">Customer</label>
           <input type="text" id="customerSearch" 
                  class="form-control" list="customerOptions"
@@ -37,21 +53,45 @@
           <datalist id="customerOptions">
             {{range .Customers}}<option data-id="{{.CustID}}" value="{{.CustName}}"></option>{{end}}
           </datalist>
-          <!-- Perbaikan: Gunakan $.OrderDo.CustomerID -->
           <input type="hidden" 
                  name="customer_id" 
                  id="customerID" 
                  value="{{.OrderDo.CustomerID}}">
-          <div class="form-text">Type to search, then pick a customer from the list.</div>
+          <div class="form-text">Type to search customer.</div>
         </div>
-        <div class="col-md-3 mb-3">
+
+        <!-- Form Employee (Autocomplete) -->
+      <div class="col-md-3 mb-3 position-relative">
+          <label for="employee_search" class="form-label">Search Employee</label>
+          <input type="text" id="employee_search" 
+                 class="form-control" 
+                 placeholder="Types Employee Name..."
+                 value="{{if .CommitmentFee}}{{.CommitmentFee.CompleteName}}{{end}}">
+          
+          <ul id="suggestions" class="list-group position-absolute w-100 shadow-sm" style="display:none; z-index:1000; max-height:200px; overflow-y:auto;"></ul>
+          
+          <!-- Hidden Input untuk EmployeeCardNumber (int) -->
+          <input type="hidden" 
+                 id="employee_card_number" 
+                 name="employee_card_number"
+                 value="{{if .CommitmentFee}}{{.CommitmentFee.EmployeeCardNumber}}{{end}}"
+                 required>
+          
+               </div>
+      <div class="col-md-2 mb-3">
+      <input type="text" 
+                 id="display_card_number" 
+                 class="form-control mt-2" 
+                 readonly 
+                 placeholder="No. Kartu Karyawan"
+                 value="{{if .CommitmentFee}}{{.CommitmentFee.EmployeeCardNumber}}{{end}}">
+
+      </div>
+      <div class="row">
+        <div class="col-md-2 mb-3">
           <label class="form-label">Shipment</label>
           <input type="text" name="shipment" class="form-control" maxlength="20" value="{{.OrderDo.Shipment}}">
         </div>
-      </div>
-
-      <div class="row">
-
         <div class="col-md-2 mb-3">
           <label class="form-label">Ship Number</label>
           <input type="text" name="ship_number" class="form-control" maxlength="20" value="{{.OrderDo.ShipNumber}}">
@@ -60,15 +100,11 @@
           <label class="form-label">Driver Number</label>
           <input type="text" name="driver_number" class="form-control" maxlength="20" value="{{.OrderDo.DriverNumber}}">
         </div>
-      <div class="col-md-7 mb-3">
-        <label class="form-label">Description</label>
-        <textarea type="text" name="description" 
-                  class="form-control" maxlength="100" 
-                  value="{{.OrderDo.Description}}"> 
-        </textarea>
+        <div class="col-md-5 mb-3">
+          <label class="form-label">Description</label>
+          <textarea name="description" class="form-control" maxlength="100">{{.OrderDo.Description}}</textarea>
+        </div>
       </div>
-      </div>
-
 
       {{if not .IsEdit}}
       <hr>
@@ -82,15 +118,17 @@
             <th>Qty</th>
             <th>Price</th>
             <th>Doc Number</th>
+            <th>Employee Card Number</th>
             <th width="50px">Action</th>
           </tr>
         </thead>
         <tbody id="detailRowsBody">
-          <!-- Menggunakan class (bukan ID) agar mendukung Add Line bertingkat -->
           <tr class="detail-row">
             <td>
               <input type="hidden" name="order_do_dtid[]" class="detail-id-inp">
               <input type="hidden" name="product_id[]" class="product-id-inp">
+
+            
               <input type="text" 
                       name="order_no[]" 
                       class="form-control form-control-sm order-no-inp" 
@@ -99,41 +137,44 @@
                       style="min-width: 220px;" 
                       required>
 
-            <!-- <div class="ac-box list-group position-absolute w-100 shadow-sm" 
-                 style="display:none; 
-                 z-index:500; 
-                 max-height: 200px; 
-                 overflow-y: auto;">
-            </div> -->
-            <div class="ac-box"></div>
+              <div class="ac-box"></div>
             </td>
             <td><input type="text" name="item_name[]" class="form-control form-control-sm item-name-inp" maxlength="100" style="min-width: 100px;" readonly></td>
             <td><input type="text" name="measure[]" class="form-control form-control-sm measure-inp" style="min-width: 20px;" maxlength="20" readonly></td>
             <td><input type="number" name="qty[]" class="form-control form-control-sm qty-inp" style="min-width: 20px;"></td>
             <td><input type="number" step="0.01" name="price[]" class="form-control form-control-sm price-inp" readonly></td>
             <td><input type="text" name="document_number[]" class="form-control form-control-sm document_number-inp"></td>
+            <td>
+                <input type="text" 
+                         name="employee_card_number[]" 
+                         class="form-control form-control-sm employee_card_number-inp">
+            </td>
+            <!-- KOLOM TAMBAHAN: Checkbox SP Processed -->
+            <td class="text-center align-middle">
+              <input type="checkbox" class="form-check-input is-sp-processed-chk">
+              <!-- Hidden input penampung nilai 0 atau 1 untuk payload/form submit -->
+              <input type="hidden" name="is_sharing_profit_processed[]" class="is-sp-processed-inp" value="0">
+            </td> 
             <td><button type="button" class="btn btn-sm btn-outline-danger remove-row">&times;</button></td>
           </tr>
         </tbody>
       </table>
-      <!-- Pembungkus Flexbox: + Add Line di kiri, Save/Cancel di kanan -->
+
       <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
           <button type="button" id="addRow" class="btn btn-sm btn-outline-secondary">+ Add Line</button>
         </div>
         <div class="d-flex gap-2">
-          <button type="submit" class="btn btn-primary">
-          {{if .IsEdit}}Save Changes{{else}}Create{{end}}
-         </button>
+          <button type="submit" class="btn btn-primary">Create</button>
           <a href="/orderdo" class="btn btn-light">Cancel</a>
         </div>
       </div>
-          {{else}}
+      {{else}}
       <div class="alert alert-info">
         Detail lines are managed from the order Do's detail page after saving.
       </div>
       <div class="text-end mt-3">
-        <button type="submit" class="btn btn-primary">{{if .IsEdit}}Save Changes{{else}}Create{{end}}</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
         <a href="/orderdo" class="btn btn-light">Cancel</a>
       </div>
       {{end}}
@@ -142,112 +183,166 @@
   </div>
 </div>
 
-{{if not .IsEdit}}
-<style>
-.ac-box {
-  position: absolute;
-  z-index: 20;
-  background: #fff;
-  border: 1px solid #ddd;
-  width: 50%;
-  max-height: 220px;
-  overflow-y: auto;
-  display: none;
-  box-shadow: 0 4px 8px rgba(0,0,0,.08);
-}
-.ac-item { padding: 6px 8px; cursor: pointer; font-size: .875rem; }
-.ac-item:hover { background: #f0f0f0; }
-</style>
 
+<script src="/static/js/load_autocomplete.js"></script>
 <script>
-// Handler Datalist Customer
-const customerSearch = document.getElementById('customerSearch');
-const customerID = document.getElementById('customerID');
-customerSearch.addEventListener('input', function() {
-  const opts = document.getElementById('customerOptions').options;
-  customerID.value = '';
-  for (let opt of opts) {
-    if (opt.value === this.value) {
-      customerID.value = opt.getAttribute('data-id');
-      break;
+  document.addEventListener('DOMContentLoaded', function () {
+    // Inisialisasi Autocomplete external jika ada
+    if (window.AppAutocomplete && window.AppAutocomplete.initEmployee) {
+      window.AppAutocomplete.initEmployee();
     }
-  }
-});
 
-// Handler Dynamic Table Rows
-document.getElementById('addRow').addEventListener('click', function () {
-  const body = document.getElementById('detailRowsBody');
-  const firstRow = body.rows[0];
-  const newRow = firstRow.cloneNode(true);
-  
-  newRow.querySelectorAll('input').forEach(input => input.value = '');
-  newRow.querySelector('.ac-box').style.display = 'none';
-  body.appendChild(newRow);
-});
-
-document.getElementById('detailRowsBody').addEventListener('click', function (e) {
-  if (e.target.classList.contains('remove-row')) {
-    const body = document.getElementById('detailRowsBody');
-    if (body.rows.length > 1) {
-      e.target.closest('tr').remove();
-    }
-  }
-});
-
-// Handler Autocomplete Event Delegation (Mendukung baris dinamis)
-let orderTimer = null;
-document.getElementById('detailRowsBody').addEventListener('input', function(e) {
-  if (!e.target.classList.contains('order-no-inp')) return;
-
-  clearTimeout(orderTimer);
-  const inputEl = e.target;
-  const row = inputEl.closest('tr');
-  const acBox = row.querySelector('.ac-box');
-  const q = inputEl.value.trim();
-  const custID = customerID.value;
-
-  if (!q || !custID) { acBox.style.display = 'none'; return; }
-
-  orderTimer = setTimeout(async () => {
-    try {
-      const res = await fetch(`/orderdo/lookup/orders/${encodeURIComponent(custID)}/${encodeURIComponent(q)}`, {
-        credentials: 'same-origin'
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      renderSuggestions(data.results || data || [], row);
-    } catch (err) {
-      console.error('Order autocomplete error:', err);
-    }
-  }, 250);
-});
-
-function renderSuggestions(items, row) {
-  const acBox = row.querySelector('.ac-box');
-  acBox.innerHTML = '';
-  if (!items.length) { acBox.style.display = 'none'; return; }
-
-  items.forEach(item => {
-    const a = document.createElement('a');
-    a.className = 'list-group-item list-group-item-action py-1 px-2 small cursor-pointer';
-    a.textContent = `${item.OrderNo} — ${item.ProductName} (${item.Measure}, qty ${item.Qty})`;
-    a.addEventListener('click', (e) => {
-      e.preventDefault();
-      // Mengisi semua input form dari data autocomplete
-      row.querySelector('.order-no-inp').value = item.OrderNo;
-      row.querySelector('.product-id-inp').value = item.ProductID;
-      row.querySelector('.item-name-inp').value = item.ProductName;
-      row.querySelector('.measure-inp').value = item.Measure;
-      row.querySelector('.qty-inp').value = item.Qty;
-      row.querySelector('.price-inp').value = item.Price;
-      acBox.style.display = 'none';
+    // 1. Event Listener Event Delegation untuk Checkbox SP Processed (Vanilla JS menggantikan jQuery $)
+    document.addEventListener('change', function (e) {
+      if (e.target && e.target.classList.contains('is-sp-processed-chk')) {
+        const row = e.target.closest('tr');
+        const hiddenInp = row.querySelector('.is-sp-processed-inp');
+        if (hiddenInp) {
+          hiddenInp.value = e.target.checked ? '1' : '0';
+        }
+      }
     });
-    acBox.appendChild(a);
+
+    // 2. Handler Datalist Customer
+    const customerSearch = document.getElementById('customerSearch');
+    const customerID = document.getElementById('customerID');
+    if (customerSearch) {
+      customerSearch.addEventListener('input', function () {
+        const opts = document.getElementById('customerOptions').options;
+        customerID.value = '';
+        for (let opt of opts) {
+          if (opt.value === this.value) {
+            customerID.value = opt.getAttribute('data-id');
+            break;
+          }
+        }
+      });
+    }
+
+    // 3. Handler Employee Search (Menyesuaikan ID ke employee_search dan employee_card_number)
+    const employeeSearch = document.getElementById('employee_search');
+    const employeeCardNumber = document.getElementById('employee_card_number');
+    const displayCardNumber = document.getElementById('display_card_number');
+
+    if (employeeSearch) {
+      employeeSearch.addEventListener('input', function () {
+        const opts = document.getElementById('customerOptions') ? document.getElementById('customerOptions').options : [];
+        if (employeeCardNumber) employeeCardNumber.value = '';
+        if (displayCardNumber) displayCardNumber.value = '';
+
+        for (let opt of opts) {
+          if (opt.value === this.value) {
+            const cardNum = opt.getAttribute('data-card') || opt.getAttribute('data-id');
+            if (employeeCardNumber) employeeCardNumber.value = cardNum;
+            if (displayCardNumber) displayCardNumber.value = cardNum;
+            break;
+          }
+        }
+      });
+    }
+
+    // 4. Handler Dynamic Table Rows & Autocomplete Order
+    const addRowBtn = document.getElementById('addRow');
+    const detailRowsBody = document.getElementById('detailRowsBody');
+
+    if (addRowBtn && detailRowsBody) {
+      // Tambah baris baru
+      addRowBtn.addEventListener('click', function () {
+        const firstRow = detailRowsBody.rows[0];
+        if (!firstRow) return;
+
+        const newRow = firstRow.cloneNode(true);
+
+        // Reset semua input text/number/hidden
+        newRow.querySelectorAll('input').forEach(input => {
+          if (input.type === 'checkbox') {
+            input.checked = false;
+          } else if (input.classList.contains('is-sp-processed-inp')) {
+            input.value = '0';
+          } else {
+            input.value = '';
+          }
+        });
+
+        // Hide autocomplete box pada baris baru
+        const acBox = newRow.querySelector('.ac-box');
+        if (acBox) acBox.style.display = 'none';
+
+        detailRowsBody.appendChild(newRow);
+      });
+
+      // Hapus baris
+      detailRowsBody.addEventListener('click', function (e) {
+        if (e.target.classList.contains('remove-row')) {
+          if (detailRowsBody.rows.length > 1) {
+            e.target.closest('tr').remove();
+          }
+        }
+      });
+
+      // Autocomplete lookup Order No
+      let orderTimer = null;
+      detailRowsBody.addEventListener('input', function (e) {
+        if (!e.target.classList.contains('order-no-inp')) return;
+
+        clearTimeout(orderTimer);
+        const inputEl = e.target;
+        const row = inputEl.closest('tr');
+        const acBox = row.querySelector('.ac-box');
+        const q = inputEl.value.trim();
+        const custID = customerID ? customerID.value : '';
+
+        if (!q || !custID) {
+          if (acBox) acBox.style.display = 'none';
+          return;
+        }
+
+        orderTimer = setTimeout(async () => {
+          try {
+            const res = await fetch(`/orderdo/lookup/orders/${encodeURIComponent(custID)}/${encodeURIComponent(q)}`, {
+              credentials: 'same-origin'
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            renderSuggestions(data.results || data || [], row);
+          } catch (err) {
+            console.error('Order autocomplete error:', err);
+          }
+        }, 250);
+      });
+    }
+
+    function renderSuggestions(items, row) {
+      const acBox = row.querySelector('.ac-box');
+      if (!acBox) return;
+      acBox.innerHTML = '';
+      if (!items.length) {
+        acBox.style.display = 'none';
+        return;
+      }
+
+      items.forEach(item => {
+        const a = document.createElement('a');
+        a.className = 'list-group-item list-group-item-action py-1 px-2 small cursor-pointer';
+        a.textContent = `${item.OrderNo} — ${item.ProductName} (${item.Measure}, qty ${item.Qty}), ${item.EmployeeCardNumber || ''}`;
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          row.querySelector('.order-no-inp').value = item.OrderNo;
+          row.querySelector('.product-id-inp').value = item.ProductID;
+          row.querySelector('.item-name-inp').value = item.ProductName;
+          row.querySelector('.measure-inp').value = item.Measure;
+          row.querySelector('.qty-inp').value = item.Qty;
+          row.querySelector('.price-inp').value = item.Price;
+          row.querySelector('.employee_card_number-inp').value = item.EmployeeCardNumber || '';
+
+          acBox.style.display = 'none';
+        });
+        acBox.appendChild(a);
+      });
+      acBox.style.display = 'block';
+    }
   });
-  acBox.style.display = 'block';
-}
 </script>
-{{end}}
 
 {{template "footer" .}}
 </body>

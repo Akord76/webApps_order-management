@@ -99,8 +99,6 @@ func calculateGrandTotal(details []model.OrderDoDetail) float64 {
 	return total
 }
 
-
-
 func (h *OrderDoHandler) ShowCreate(c *gin.Context) {
 	data := baseData(c, "New Order Sale")
 	data["IsEdit"] = false
@@ -124,6 +122,9 @@ func (h *OrderDoHandler) Create(c *gin.Context) {
 	qtys := c.PostFormArray("qty[]")
 	prices := c.PostFormArray("price[]")
 	documentNumbers := c.PostFormArray("document_number[]")
+	employeeCardNumbers := c.PostFormArray("employee_card_number[]")
+	isSharingProfitProcesseds := c.PostFormArray("is_sharing_profit_processed[]")
+
 	details := make([]gin.H, 0, len(productIDs))
 	for i := range productIDs {
 		if productIDs[i] == "" {
@@ -154,31 +155,55 @@ func (h *OrderDoHandler) Create(c *gin.Context) {
 		if i < len(documentNumbers) {
 			documentNumber = documentNumbers[i]
 		}
+
+		employeeCardNumber := 0
+		if i < len(employeeCardNumbers) {
+			employeeCardNumber, _ = strconv.Atoi(employeeCardNumbers[i])
+		}
+	// Convert isSharingProfitProcessed to boolean
+		isSharingProfitProcessed := false
+		if i < len(isSharingProfitProcesseds) {
+			val := isSharingProfitProcesseds[i]
+			isSharingProfitProcessed = val == "1" || val == "true" || val == "on"
+		}
+
 		details = append(details, gin.H{
-			"order_do_dtno":   detailID,
-			"order_no":        orderNo,
-			"product_id":      productIDs[i], // String product_id dari array
-			"item_name":       itemName,
-			"measure":         measure,
-			"qty":             qty,
-			"price":           price,
-			"document_number": documentNumber,
+			"order_do_dtno":               detailID,
+			"order_no":                    orderNo,
+			"product_id":                  productIDs[i], // String product_id dari array
+			"item_name":                   itemName,
+			"measure":                     measure,
+			"qty":                         qty,
+			"price":                       price,
+			"document_number":             documentNumber,
+			"employee_card_number":        employeeCardNumber,
+			"is_sharing_profit_processed": isSharingProfitProcessed,
 		})
 	}
-
+	//convert employee_card_number to int
+	employeeCardNumber, _ := strconv.Atoi(c.PostForm("employee_card_number"))
 	body := gin.H{
-		"order_do_id":   orderDoID,
-		"order_do_no":   orderDoNo,
-		"customer_id":   c.PostForm("customer_id"),
-		"shipment":      c.PostForm("shipment"),
-		"ship_number":   c.PostForm("ship_number"),
-		"driver_number": c.PostForm("driver_number"),
-		"description":   c.PostForm("description"),
-		"details":       details,
+		"order_do_id": orderDoID,
+		"order_do_no": orderDoNo,
+
+		"customer_id":          c.PostForm("customer_id"),
+		"employee_card_number": employeeCardNumber,
+		"shipment":             c.PostForm("shipment"),
+		"ship_number":          c.PostForm("ship_number"),
+		"driver_number":        c.PostForm("driver_number"),
+		"description":          c.PostForm("description"),
+		"status_do":            c.PostForm("status_do"),
+
+		"details": details,
 	}
 
 	if d := parseFormDate(c.PostForm("order_do_date")); d != nil {
 		body["order_do_date"] = d
+	}
+
+	//create parsing updated_at to time.Time
+	if d := parseFormDate(c.PostForm("updated_at")); d != nil {
+		body["updated_at"] = d
 	}
 
 	if err := h.api.Post("/orderdo", token(c), body, nil); err != nil {
@@ -210,7 +235,6 @@ func (h *OrderDoHandler) ShowEdit(c *gin.Context) {
 	c.HTML(http.StatusOK, "order_do_template/create_update.html", data)
 }
 
-
 // Update -> POST /orderdo/:orderDoNo/:orderDoID/edit : master fields only.
 func (h *OrderDoHandler) Update(c *gin.Context) {
 
@@ -218,12 +242,18 @@ func (h *OrderDoHandler) Update(c *gin.Context) {
 	orderDoNo := c.Param("orderDoNo")
 	path := "/orderdo/" + orderDoID + "/" + orderDoNo
 
+	employeeCardNumber, _ := strconv.Atoi(c.PostForm("employee_card_number"))
+
 	body := gin.H{
-		"customer_id":   c.PostForm("customer_id"),
-		"shipment":      c.PostForm("shipment"),
-		"ship_number":   c.PostForm("ship_number"),
-		"driver_number": c.PostForm("driver_number"),
-		"description":   c.PostForm("description"),
+		"order_do_date":        c.PostForm("order_do_date"),
+		"customer_id":          c.PostForm("customer_id"),
+		"employee_card_number": employeeCardNumber, // Assuming you have parsed this value earlier
+		"shipment":             c.PostForm("shipment"),
+		"ship_number":          c.PostForm("ship_number"),
+		"driver_number":        c.PostForm("driver_number"),
+		"description":          c.PostForm("description"),
+		"status":               c.PostForm("status_do"),
+		"updated_at":           c.PostForm("updated_at"),
 	}
 	if d := parseFormDate(c.PostForm("order_do_date")); d != nil {
 		body["order_do_date"] = d
@@ -262,15 +292,18 @@ func (h *OrderDoHandler) AddDetail(c *gin.Context) {
 
 	qty, _ := strconv.Atoi(c.PostForm("qty"))
 	price, _ := strconv.ParseFloat(c.PostForm("price"), 64)
-
+	employeeCardNumber, _ := strconv.Atoi(c.PostForm("employee_card_number"))
 	body := gin.H{
-		"order_do_dtno": c.PostForm("order_do_dtno"),
-		"order_no":      c.PostForm("order_no"),
-		"product_id":    c.PostForm("product_id"),
-		"item_name":     c.PostForm("item_name"),
-		"measure":       c.PostForm("measure"),
-		"qty":           qty,
-		"price":         price,
+		"order_do_dtno":               c.PostForm("order_do_dtno"),
+		"order_no":                    c.PostForm("order_no"),
+		"product_id":                  c.PostForm("product_id"),
+		"item_name":                   c.PostForm("item_name"),
+		"measure":                     c.PostForm("measure"),
+		"qty":                         qty,
+		"price":                       price,
+		"document_number":             c.PostForm("document_number"),
+		"employee_card_number":        employeeCardNumber,
+		"is_sharing_profit_processed": c.PostForm("is_sharing_profit_processed") == "true",
 	}
 
 	// Alamat endpoint API Backend

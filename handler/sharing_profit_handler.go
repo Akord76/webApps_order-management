@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 	"time"
+
 	"webApps_order-management/client"
 	"webApps_order-management/model"
 
@@ -20,16 +20,20 @@ func NewSharingProfitHandler(api *client.APIClient) *SharingProfitHandler {
 	return &SharingProfitHandler{api: api}
 }
 
+// List menampilkan daftar Sharing Profit
 func (h *SharingProfitHandler) List(c *gin.Context) {
 	var list []model.SharingProfit
 	data := baseData(c, "Sharing Profit")
+
 	if err := h.api.Get("/sharing-profits", token(c), &list); err != nil {
 		data["Error"] = "Failed to load sharing profit records: " + err.Error()
 	}
 	data["SharingProfits"] = list
+
 	c.HTML(http.StatusOK, "sharing_profit_template/page_view_sharing_profit.html", data)
 }
 
+// Detail menampilkan detail 1 record Sharing Profit
 func (h *SharingProfitHandler) Detail(c *gin.Context) {
 	path := "/sharing-profits/" + c.Param("num") + "/" + c.Param("id")
 
@@ -44,40 +48,90 @@ func (h *SharingProfitHandler) Detail(c *gin.Context) {
 	c.HTML(http.StatusOK, "sharing_profit_template/details_sharing_profit.html", data)
 }
 
-func (h *SharingProfitHandler) ShowCreate(c *gin.Context) {
+// ShowCreateForm menampilkan halaman form create Sharing Profit
+func (h *SharingProfitHandler) ShowCreateForm(c *gin.Context) {
+	orderDoID := c.Query("order_do_id")
+	orderDoNo := c.Query("order_do_dtno")
+
 	data := baseData(c, "New Sharing Profit")
+	var sp model.SharingProfit
+
+	// Default date hari ini
+	sp.SharingProfitDate = time.Now()
+	sp.Qty = 1
+
+	// Pre-fill jika dibuka dari Detail DO
+	if orderDoID != "" && orderDoNo != "" {
+		apiURL := fmt.Sprintf("/load_details/%s/%s/details", orderDoID, url.PathEscape(orderDoNo))
+
+		var apiRes struct {
+			Data    []model.OrderDoDetail `json:"data"`
+			Success bool                  `json:"success"`
+		}
+
+		if err := h.api.Get(apiURL, token(c), &apiRes); err == nil && apiRes.Success && len(apiRes.Data) > 0 {
+			detail := apiRes.Data[0]
+			sp.OrderDoNo = detail.OrderDoNo
+			sp.OrderNo = detail.OrderNo
+			sp.ProductID = detail.ProductID
+			sp.ItemName = detail.ItemName
+			sp.Measure = detail.Measure
+			sp.Qty = detail.Qty
+		} else {
+			data["Warning"] = "Data Detail DO tidak ditemukan atau gagal dimuat."
+		}
+	}
+
+	data["SharingProfit"] = sp
 	data["IsEdit"] = false
-	data["SharingProfit"] = model.SharingProfit{}
+
 	c.HTML(http.StatusOK, "sharing_profit_template/create_update.html", data)
 }
 
-func (h *SharingProfitHandler) formBody(c *gin.Context) gin.H {
-	body := gin.H{
-		"order_sale_detail_id": c.PostForm("order_sale_detail_id"),
+// ProcessBulk memproses otomasisasi kalkulasi Sharing Profit dari DO
+func (h *SharingProfitHandler) ProcessBulk(c *gin.Context) {
+	orderDONo := c.PostForm("order_do_dtno")
+	if orderDONo == "" {
+		c.Redirect(http.StatusSeeOther, "/sharing-profits?err="+url.QueryEscape("Nomor DO wajib diisi"))
+		return
 	}
-	if v := c.PostForm("commitment_id"); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			body["commitment_id"] = n
-		}
+
+	payload := gin.H{
+		"order_do_dtno": orderDONo,
 	}
-	if v, err := strconv.ParseFloat(c.PostForm("share_value"), 64); err == nil {
-		body["share_value"] = v
+
+	var apiRes struct {
+		Success bool   `json:"success"`
+		Message string `json:"message"`
 	}
-	return body
+
+	if err := h.api.Post("/sharing-profits/process-bulk", token(c), payload, &apiRes); err != nil {
+		c.Redirect(http.StatusSeeOther, "/sharing-profits?err="+url.QueryEscape("Bulk sharing profit Failed: "+err.Error()))
+		return
+	}
+
+	c.Redirect(http.StatusSeeOther, "/sharing-profits?ok="+url.QueryEscape("Sharing profit berhasil diproses dari DO "+orderDONo))
 }
 
+// Create menyimpan record Sharing Profit manual/baru
 func (h *SharingProfitHandler) Create(c *gin.Context) {
-	num, _ := strconv.Atoi(c.PostForm("sharing_profit_num"))
-	body := h.formBody(c)
-	body["sharing_profit_num"] = num
-	body["sharing_profit_id"] = c.PostForm("sharing_profit_id")
-
-	if err := h.api.Post("/sharing-profits", token(c), body, nil); err != nil {
+	var req model.CreateSharingProfitRequest
+	if err := c.ShouldBind(&req); err != nil {
 		data := baseData(c, "New Sharing Profit")
 		data["IsEdit"] = false
-		data["SharingProfit"] = model.SharingProfit{
-			SharingProfitNum: num, SharingProfitID: c.PostForm("sharing_profit_id"),
-		}
+		data["Error"] = "Form input tidak valid: " + err.Error()
+		c.HTML(http.StatusBadRequest, "sharing_profit_template/create_update.html", data)
+		return
+	}
+
+	var apiRes struct {
+		Success bool   `json:"success"`
+		Message string `json:"message"`
+	}
+
+	if err := h.api.Post("/sharing-profits", token(c), req, &apiRes); err != nil {
+		data := baseData(c, "New Sharing Profit")
+		data["IsEdit"] = false
 		data["Error"] = "Failed to create sharing profit record: " + err.Error()
 		c.HTML(http.StatusOK, "sharing_profit_template/create_update.html", data)
 		return
@@ -86,14 +140,13 @@ func (h *SharingProfitHandler) Create(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/sharing-profits?ok="+url.QueryEscape("Sharing profit record created"))
 }
 
-// ShowEditForm menampilkan halaman form edit Sharing Profit dengan data eksisting dari API Backend
+// ShowEditForm menampilkan halaman form edit Sharing Profit dengan data eksisting
 func (h *SharingProfitHandler) ShowEditForm(c *gin.Context) {
 	num := c.Param("num")
 	id := c.Param("id")
 
 	data := baseData(c, "Edit Sharing Profit")
 
-	// 1. Tembak API Backend untuk mengambil data Sharing Profit eksisting
 	apiURL := fmt.Sprintf("/sharing-profits/detail/%s/%s", num, id)
 	var apiRes struct {
 		Data    model.SharingProfit `json:"data"`
@@ -102,15 +155,13 @@ func (h *SharingProfitHandler) ShowEditForm(c *gin.Context) {
 	}
 
 	if err := h.api.Get(apiURL, token(c), &apiRes); err != nil || !apiRes.Success {
-		c.HTML(http.StatusInternalServerError, "error.html", gin.H{
-			"Error": "Gagal mengambil data Sharing Profit eksisting.",
-		})
+		c.Redirect(http.StatusSeeOther, "/sharing-profits?err="+url.QueryEscape("Gagal mengambil data Sharing Profit eksisting"))
 		return
 	}
 
-	// 2. Jika data DO detail ada, ambil detail DO tambahan (Product Name, Measure, Order No) untuk tampilan
-	if apiRes.Data.OrderDoDetailNo != "" {
-		doApiURL := fmt.Sprintf("/orderdo/detail-by-dtno/%s", apiRes.Data.OrderDoDetailNo)
+	// Fetch data pendukung DO jika OrderDoNo tersedia
+	if apiRes.Data.OrderDoNo != "" {
+		doApiURL := fmt.Sprintf("/orderdo/detail-by-dono/%s", apiRes.Data.OrderDoNo)
 		var doRes struct {
 			Data struct {
 				OrderNo  string `json:"order_no"`
@@ -129,18 +180,17 @@ func (h *SharingProfitHandler) ShowEditForm(c *gin.Context) {
 	data["SharingProfit"] = apiRes.Data
 	data["IsEdit"] = true
 
-	c.HTML(http.StatusOK, "sharing_profit_create_update.html", data)
+	c.HTML(http.StatusOK, "sharing_profit_template/create_update.html", data)
 }
 
-// Update memproses request form POST/PUT untuk memperbarui data Sharing Profit
-// Update memproses request form POST/PUT untuk memperbarui data Sharing Profit
+// Update memproses pembaharuan data Sharing Profit
 func (h *SharingProfitHandler) Update(c *gin.Context) {
 	num := c.Param("num")
 	id := c.Param("id")
 
 	var req model.CreateSharingProfitRequest
 	if err := c.ShouldBind(&req); err != nil {
-		c.HTML(http.StatusBadRequest, "sharing_profit_create_update.html", gin.H{
+		c.HTML(http.StatusBadRequest, "sharing_profit_template/create_update.html", gin.H{
 			"Error":         "Form input tidak valid: " + err.Error(),
 			"IsEdit":        true,
 			"SharingProfit": req,
@@ -148,16 +198,14 @@ func (h *SharingProfitHandler) Update(c *gin.Context) {
 		return
 	}
 
-	// Tembak API Backend untuk memperbarui data
 	apiURL := fmt.Sprintf("/sharing-profits/%s/%s/update", num, id)
 	var apiRes struct {
 		Success bool   `json:"success"`
 		Message string `json:"message"`
 	}
 
-	// PERBAIKAN: Sesuaikan urutan parameter (URL, token, payload request, target response)
 	if err := h.api.Put(apiURL, token(c), req, &apiRes); err != nil || !apiRes.Success {
-		c.HTML(http.StatusInternalServerError, "sharing_profit_create_update.html", gin.H{
+		c.HTML(http.StatusInternalServerError, "sharing_profit_template/create_update.html", gin.H{
 			"Error":         "Gagal memperbarui Sharing Profit: " + apiRes.Message,
 			"IsEdit":        true,
 			"SharingProfit": req,
@@ -165,9 +213,10 @@ func (h *SharingProfitHandler) Update(c *gin.Context) {
 		return
 	}
 
-	c.Redirect(http.StatusSeeOther, "/sharing-profits?success=Sharing+Profit+berhasil+diperbarui")
+	c.Redirect(http.StatusSeeOther, "/sharing-profits?ok="+url.QueryEscape("Sharing Profit berhasil diperbarui"))
 }
 
+// Delete menghapus data Sharing Profit
 func (h *SharingProfitHandler) Delete(c *gin.Context) {
 	path := "/sharing-profits/" + c.Param("num") + "/" + c.Param("id")
 
@@ -179,77 +228,24 @@ func (h *SharingProfitHandler) Delete(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/sharing-profits?ok="+url.QueryEscape("Sharing profit record deleted"))
 }
 
+// Handler untuk endpoint Autocomplete JSON
 func (h *SharingProfitHandler) EmployeeAutocomplete(c *gin.Context) {
-	searchQuery := c.Param("employeeCardNumber")
+	searchQuery := c.Query("q")
 	if searchQuery == "" {
-		c.JSON(http.StatusOK, gin.H{
-			"success": true,
-			"data":    []model.CommitmentFee{},
-		})
+		c.JSON(http.StatusOK, gin.H{"data": []string{}})
 		return
 	}
 
-	// Endpoint API Backend
-	apiURL := "/commitmentfees/employees/" + searchQuery
+	// Buat URL endpoint API Backend
+	apiURL := fmt.Sprintf("/sharing-profits/employees/search?search=%s", searchQuery)
 
-	// Wrapper struct sesuai bentuk JSON API
-	var apiRes struct {
-		Data    []model.CommitmentFee `json:"data"`
-		Success bool                  `json:"success"`
-	}
-
+	var apiRes model.EmployeeSearchResponse
 	if err := h.api.Get(apiURL, token(c), &apiRes); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"error":   err.Error(),
-		})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Kirimkan respon JSON balik ke frontend
-	c.JSON(http.StatusOK, gin.H{
-		"success": apiRes.Success,
-		"data":    apiRes.Data,
-	})
-}
-
-// ShowCreateForm menampilkan halaman form create Sharing Profit dengan data DO pre-filled
-
-func (h *SharingProfitHandler) ShowCreateForm(c *gin.Context) {
-	orderDoID := c.Query("order_do_id")
-	orderDoNo := c.Query("order_do_no")
-
-	data := baseData(c, "New Sharing Profit")
-	var sp model.SharingProfit
-
-	// Set tanggal default ke hari ini (YYYY-MM-DD)
-	sp.SharingProfitDate = time.Now().Format("2006-01-02")
-
-	// Jika diakses dari Halaman Detail DO (Opsi 3)
-	if orderDoID != "" && orderDoNo != "" {
-		apiURL := fmt.Sprintf("/load_details/%s/%s/details", orderDoID, url.PathEscape(orderDoNo))
-
-		var apiRes struct {
-			Data    []model.OrderDoDetail `json:"data"`
-			Success bool                  `json:"success"`
-		}
-
-		if err := h.api.Get(apiURL, token(c), &apiRes); err == nil && apiRes.Success && len(apiRes.Data) > 0 {
-			detail := apiRes.Data[0]
-			sp.OrderDoDetailNo = detail.OrderDoDetailNo
-			sp.OrderNo = detail.OrderNo
-			sp.ProductID = detail.ProductID
-			sp.ItemName = detail.ItemName
-			sp.Measure = detail.Measure
-			sp.Qty = detail.Qty
-		} else {
-			data["Warning"] = "Data Detail DO tidak ditemukan atau gagal dimuat."
-		}
-	}
-
-	data["SharingProfit"] = sp
-	data["IsEdit"] = false
-
-	c.HTML(http.StatusOK, "sharing_profit_create_update.html", data)
+	// Kembalikan data JSON ke Frontend
+	c.JSON(http.StatusOK, apiRes)
 }
 

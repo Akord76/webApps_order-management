@@ -24,8 +24,8 @@ type Handlers struct {
 	Order                *handler.OrderHandler
 	OrderDo              *handler.OrderDoHandler
 	ConfigCompanyProfile *handler.ConfigCompanyProfileHandler
-	SharingProfit        *handler.SharingProfitHandler
 	CommitmentFee        *handler.CommitmentFeeHandler
+	SharingProfit        *handler.SharingProfitHandler
 }
 
 // SetupRouter wires every page route.
@@ -54,7 +54,7 @@ func SetupRouter(jwtSecret, cookieName string, h *Handlers) *gin.Engine {
 
 	r.HTMLRender = loadTemplates("template")
 
-	r.Run(":8083")
+	//r.Run(":8083")
 	// ---- Public routes ----
 	r.GET("/login", middleware.OptionalAuth(jwtSecret, cookieName), h.Auth.ShowLogin)
 	r.POST("/login", h.Auth.Login)
@@ -241,34 +241,29 @@ func SetupRouter(jwtSecret, cookieName string, h *Handlers) *gin.Engine {
 		}
 	}
 
-	// Sharing Profit — everyone can view, ADMIN/MANAGER can write (matches
-	// the backend's /api/sharing-profits role split).
+	// ============================================================
+	// SharingProfit
+	// ============================================================
 	sharingProfits := protected.Group("/sharing-profits")
 	{
+		// Read Access (Semua Role)
 		sharingProfits.GET("", h.SharingProfit.List)
 		sharingProfits.GET("/:num/:id", h.SharingProfit.Detail)
 
+		// Write Access (Admin & Manager Only)
 		spWrite := sharingProfits.Group("")
 		spWrite.Use(middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager))
 		{
-			spWrite.GET("/create", h.SharingProfit.ShowCreate)
+			// Sesuaikan nama handler dengan yang ada di SharingProfitHandler
+			spWrite.GET("/create", h.SharingProfit.ShowCreateForm) // <-- Ubah ShowCreate menjadi ShowCreateForm
 			spWrite.POST("/create", h.SharingProfit.Create)
+			spWrite.POST("/process-bulk", h.SharingProfit.ProcessBulk)
 			spWrite.GET("/:num/:id/edit", h.SharingProfit.ShowEditForm)
 			spWrite.POST("/:num/:id/edit", h.SharingProfit.Update)
 			spWrite.POST("/:num/:id/delete", h.SharingProfit.Delete)
 		}
 	}
 
-// spGroup := r.Group("/sharing-profits", middleware.RequireAuth())
-// {
-//     spGroup.GET("", h.SharingProfit.List)
-//     spGroup.GET("/create", h.SharingProfit.ShowCreateForm)
-//     spGroup.POST("/create", h.SharingProfit.Create)
-    
-//     // Route Edit & Update
-//     spGroup.GET("/:num/:id/edit", h.SharingProfit.ShowEditForm)
-//     spGroup.POST("/:num/:id/edit", h.SharingProfit.Update)
-// }
 
 	return r
 }

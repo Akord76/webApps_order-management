@@ -3,24 +3,37 @@
 <head>{{template "head" .}}</head>
 <body>
 {{template "navbar" .}}
-<div class="container">
+<div class="container py-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3>Sharing Profit</h3>
-    {{if .CanWrite}}<a href="/sharing-profits/create" class="btn btn-primary">+ New Record</a>{{end}}
+    {{if .CanWrite}}
+    <div class="d-flex gap-2">
+      <!-- Modal Trigger untuk Bulk Process berdasarkan Order DO -->
+      <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#bulkProcessModal">
+        <i class="bi bi-calculator"></i> Process Bulk by DO
+      </button>
+      <a href="/sharing-profits/create" class="btn btn-primary">+ New Record</a>
+    </div>
+    {{end}}
   </div>
 
   {{template "alerts" .}}
 
-  <div class="card">
+  <div class="card shadow-sm">
     <div class="table-responsive">
-      <table class="table table-hover mb-0">
-        <thead>
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
           <tr>
             <th>Num</th>
-            <th>ID</th>
-            <th>Employee Card Number</th>
-            <th>Order Do ID</th>
+            <th>Sharing Profit ID</th>
+            <th>Date</th>
+            <th>Employee</th>
+            <th>Order No</th>
+            <th>DO Number</th>
+            <th>Item Name</th>
+            <th>Qty</th>
             <th>Share Value</th>
+            <th>Commitment ID</th>
             {{if .CanWrite}}<th class="text-end">Actions</th>{{end}}
           </tr>
         </thead>
@@ -28,10 +41,15 @@
           {{range .SharingProfits}}
           <tr>
             <td>{{.SharingProfitNum}}</td>
-            <td>{{.SharingProfitID}}</td>
-            <td>{{if .EmployeeCardNumber}}{{.EmployeeCardNumber}}{{else}}-{{end}}</td>
+            <td><strong>{{.SharingProfitID}}</strong></td>
+            <td>{{.SharingProfitDate}}</td>
+            <td>{{.EmployeeCardNumber}}</td>
+            <td>{{.OrderNo}}</td>
             <td>{{.OrderDoNo}}</td>
-            <td>{{.ShareValue}}</td>
+            <td>{{.ProductID}}</td>
+            <td>{{.Qty}}</td>
+            <td><strong>{{.ShareValue}}</strong></td>
+            <td>{{.CommitmentID}}</td>
             {{if $.CanWrite}}
             <td class="text-end">
               <a href="/sharing-profits/{{.SharingProfitNum}}/{{.SharingProfitID}}" class="btn btn-sm btn-outline-secondary">View</a>
@@ -44,13 +62,41 @@
             {{end}}
           </tr>
           {{else}}
-          <tr><td colspan="6" class="text-center text-muted py-4">No records found.</td></tr>
+          <tr><td colspan="9" class="text-center text-muted py-4">No sharing profit records found.</td></tr>
           {{end}}
         </tbody>
       </table>
     </div>
   </div>
 </div>
+
+<!-- Modal Process Bulk by DO -->
+{{if .CanWrite}}
+<div class="modal fade" id="bulkProcessModal" tabindex="-1" aria-labelledby="bulkProcessModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="bulkProcessModalLabel">Process Bulk Sharing Profit</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="/sharing-profits/process-bulk" method="POST">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="order_do_dtno" class="form-label">Order DO Number</label>
+            <input type="text" class="form-control" id="order_do_dtno" name="order_do_dtno" placeholder="Masukkan Nomor Order DO" required>
+            <div class="form-text">Sistem akan otomatis menghitung Sharing Profit untuk seluruh item barang & karyawan terkait pada DO ini.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-success">Proses Sekarang</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{{end}}
+
 {{template "footer" .}}
 </body>
 </html>

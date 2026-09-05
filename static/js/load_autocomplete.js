@@ -240,9 +240,102 @@ async function fetchProductSuggestions(q, dropdownList, cfg) {
         });
     }
 
-    // Ekspor fungsi ke scope window agar bisa dipanggil dari HTML Go
+   
+    /**
+     * Autocomplete khusus Form Sharing Profit Manual/Edit
+     * Mengisi Employee Name, Employee Card Number, dan Commitment ID
+     */
+    function initSharingProfitAutocomplete(options = {}) {
+        const config = {
+            searchUrl: options.searchUrl || '/commitmentfees/employees/search',
+            inputId: options.inputId || 'employee_search',
+            listId: options.listId || 'suggestions',
+            hiddenCardId: options.hiddenCardId || 'employee_card_number',
+            displayCardId: options.displayCardId || 'display_card_number',
+            commitmentIdField: options.commitmentIdField || 'commitment_id',
+            debounceMs: options.debounceMs || 300
+        };
+
+        const searchInput = document.getElementById(config.inputId);
+        const suggestionsList = document.getElementById(config.listId);
+        const hiddenCardInput = document.getElementById(config.hiddenCardId);
+        const displayCardInput = document.getElementById(config.displayCardId);
+        const commitmentIdInput = document.getElementById(config.commitmentIdField);
+
+        if (!searchInput || !suggestionsList) return;
+
+        let debounceTimer;
+
+        searchInput.addEventListener('input', function () {
+            const query = this.value.trim();
+
+            if (query.length < 2) {
+                suggestionsList.style.display = 'none';
+                suggestionsList.innerHTML = '';
+                if (hiddenCardInput) hiddenCardInput.value = '';
+                if (displayCardInput) displayCardInput.value = '';
+                if (commitmentIdInput) commitmentIdInput.value = '';
+                return;
+            }
+
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                fetchEmployees(query);
+            }, config.debounceMs);
+        });
+
+        function fetchEmployees(query) {
+            fetch(`${config.searchUrl}?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(res => {
+                    suggestionsList.innerHTML = '';
+
+                    if (res.success && res.data && res.data.length > 0) {
+                        res.data.forEach(item => {
+                            const li = document.createElement('li');
+                            li.className = 'list-group-item list-group-item-action';
+                            const fullName = `${item.first_name} ${item.last_name}`;
+
+                            li.innerHTML = `
+                                <div><strong>${fullName}</strong></div>
+                                <small class="text-muted">Card No: ${item.employee_card_number || '-'}</small>
+                            `;
+
+                            li.addEventListener('click', function () {
+                                searchInput.value = fullName;
+                                if (hiddenCardInput) hiddenCardInput.value = item.employee_card_number || '';
+                                if (displayCardInput) displayCardInput.value = item.employee_card_number || '';
+                                // Isi CommitmentID jika dikirim oleh API response
+                                if (commitmentIdInput && item.commitment_id) {
+                                    commitmentIdInput.value = item.commitment_id;
+                                }
+                                suggestionsList.style.display = 'none';
+                            });
+
+                            suggestionsList.appendChild(li);
+                        });
+                        suggestionsList.style.display = 'block';
+                    } else {
+                        suggestionsList.style.display = 'none';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching employee autocomplete:', err);
+                    suggestionsList.style.display = 'none';
+                });
+        }
+
+        document.addEventListener('click', function (e) {
+            if (!searchInput.contains(e.target) && !suggestionsList.contains(e.target)) {
+                suggestionsList.style.display = 'none';
+            }
+        });
+    }
+
+    // Ekspor fungsi ke scope window
     window.AppAutocomplete = {
         initProduct: initProductAutocomplete,
-        initEmployee: initEmployeeAutocomplete
+        initEmployee: initEmployeeAutocomplete,
+        initSharingProfit: initSharingProfitAutocomplete
     };
 })();

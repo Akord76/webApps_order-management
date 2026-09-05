@@ -5,7 +5,7 @@
 </head>
 <body>
 {{template "navbar" .}}
-<div class="container" style="max-width: 680px;">
+<div class="container py-4" style="max-width: 680px;">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3>{{if .IsEdit}}Edit Sharing Profit{{else}}New Sharing Profit{{end}}</h3>
     <a href="/sharing-profits" class="btn btn-outline-secondary">Back</a>
@@ -17,20 +17,25 @@
     <form id="sharingProfitForm" method="POST" 
           action="{{if .IsEdit}}/sharing-profits/{{.SharingProfit.SharingProfitNum}}/{{.SharingProfit.SharingProfitID}}/edit{{else}}/sharing-profits/create{{end}}">
       
+      <!-- Hidden Input CommitmentID (Mandatory untuk DB FK) -->
+      <input type="hidden" id="commitment_id" name="commitment_id" value="{{.SharingProfit.CommitmentID}}" required>
+
       <!-- ID, Num, & Date Row -->
       <div class="row">
+        {{if .IsEdit}}
         <div class="col-md-4 mb-3">
           <label class="form-label">Sharing Profit Num</label>
           <input type="number" name="sharing_profit_num" class="form-control"
-                 value="{{.SharingProfit.SharingProfitNum}}" {{if .IsEdit}}readonly{{else}}required{{end}}>
+                 value="{{.SharingProfit.SharingProfitNum}}" readonly>
         </div>
-        <div class="col-md-4 mb-3">
+        {{end}}
+        <div class="col-md-{{if .IsEdit}}4{{else}}6{{end}} mb-3">
           <label class="form-label">Sharing Profit ID</label>
           <input type="text" name="sharing_profit_id" class="form-control" maxlength="15"
-                 value="{{.SharingProfit.SharingProfitID}}" {{if .IsEdit}}readonly{{else}}required{{end}}>
+                 value="{{.SharingProfit.SharingProfitID}}" {{if .IsEdit}}readonly{{else}}required{{end}} placeholder="e.g. SP-12345">
         </div>
-        <!-- Field Tambahan: Sharing Profit Date -->
-        <div class="col-md-4 mb-3">
+        <!-- Sharing Profit Date -->
+        <div class="col-md-{{if .IsEdit}}4{{else}}6{{end}} mb-3">
           <label class="form-label">Date</label>
           <input type="date" name="sharing_profit_date" class="form-control"
                  value="{{.SharingProfit.SharingProfitDate}}" required>
@@ -42,27 +47,26 @@
           <label for="employee_search" class="form-label">Search Employee</label>
           <input type="text" id="employee_search" 
                  class="form-control" 
-                 placeholder="Types Employee Name..."
+                 placeholder="Type Employee Name..."
                  value="{{.SharingProfit.EmployeeName}}" autocomplete="off">
           
           <ul id="suggestions" class="list-group position-absolute w-100 shadow-sm" style="display:none; z-index:1000; max-height:200px; overflow-y:auto;"></ul>
           
-          <!-- Hidden Input untuk EmployeeCardNumber (Save ke DB) -->
+          <!-- Hidden Input untuk EmployeeCardNumber (Display/Query saja) -->
           <input type="hidden" 
                  id="employee_card_number" 
                  name="employee_card_number"
-                 value="{{.SharingProfit.EmployeeCardNumber}}"
-                 required>
+                 value="{{.SharingProfit.EmployeeCardNumber}}">
           
           <input type="text" 
                  id="display_card_number" 
-                 class="form-control mt-2" 
+                 class="form-control mt-2 bg-light" 
                  readonly 
                  placeholder="No. Kartu Karyawan"
                  value="{{if .SharingProfit.EmployeeCardNumber}}{{.SharingProfit.EmployeeCardNumber}}{{end}}">
       </div>
 
-      <!-- Detail DO Section (Opsi 3 Pre-filled) -->
+      <!-- Detail DO Section -->
       <div class="card bg-light p-3 mb-3 border">
         <h6 class="fw-bold mb-3 text-secondary">Delivery Order Details</h6>
         
@@ -71,7 +75,7 @@
           <div class="col-md-6 mb-3">
             <label class="form-label">Order DO Detail No</label>
             <input type="text" name="order_do_dtno" class="form-control" 
-                   value="{{.SharingProfit.OrderDoDetailNo}}" readonly required>
+                   value="{{.SharingProfit.OrderDoDetailNo}}" {{if .SharingProfit.OrderDoDetailNo}}readonly{{else}}required{{end}} placeholder="e.g. DO-001-01">
           </div>
 
           <!-- Order No (Tampilan Saja) -->
@@ -82,8 +86,8 @@
           </div>
         </div>
 
-        <!-- Hidden Product ID (Save ke DB) -->
-        <input type="hidden" id="product_id" name="product_id" value="{{.SharingProfit.ProductID}}" required>
+        <!-- Hidden Product ID -->
+        <input type="hidden" id="product_id" name="product_id" value="{{.SharingProfit.ProductID}}">
 
         <div class="row">
           <!-- Product Name (Tampilan Saja) -->
@@ -103,7 +107,7 @@
           <!-- Qty (Save ke DB) -->
           <div class="col-md-3 mb-3">
             <label class="form-label">Qty</label>
-            <input type="number" name="qty" class="form-control" 
+            <input type="number" id="qty" name="qty" class="form-control" 
                    value="{{if .SharingProfit.Qty}}{{.SharingProfit.Qty}}{{else}}1{{end}}" required>
           </div>
         </div>
@@ -111,13 +115,15 @@
 
       <!-- Share Value Input -->
       <div class="mb-3">
-        <label class="form-label">Share Value</label>
+        <label class="form-label">Share Value (Rp)</label>
         <input type="number" step="0.01" id="share_value" name="share_value" class="form-control"
-               value="{{.SharingProfit.ShareValue}}" required>
+               value="{{.SharingProfit.ShareValue}}" required placeholder="0.00">
       </div>
 
-      <button type="submit" class="btn btn-primary">{{if .IsEdit}}Save Changes{{else}}Create{{end}}</button>
-      <a href="/sharing-profits" class="btn btn-light">Cancel</a>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">{{if .IsEdit}}Save Changes{{else}}Create{{end}}</button>
+        <a href="/sharing-profits" class="btn btn-light">Cancel</a>
+      </div>
     </form>
   </div>
 </div>

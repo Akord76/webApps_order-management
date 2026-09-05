@@ -7,7 +7,7 @@ import (
 
 type OrderDoDetail struct {
 	OrderDoDetailID int     `json:"order_do_dtid"`
-	OrderDoDetailNo string  `json:"order_do_dtno"`
+	OrderDoNo string  `json:"order_do_dtno"`
 	OrderNo         string  `json:"order_no"`
 	ProductID       string  `json:"product_id"`
 	ItemName        string  `json:"item_name"` //di ambil dari master product join product
@@ -16,6 +16,8 @@ type OrderDoDetail struct {
 	Price           float64 `json:"price"`
 
 	DocumentNumber string `json:"document_number"`
+	EmployeeCardNumber int        `json:"employee_card_number"`
+	IsSharingProfitProcessed bool   `json:"is_sharing_profit_processed"`
 }
 
 // Di file model struct Go Anda
