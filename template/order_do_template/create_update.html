@@ -66,7 +66,7 @@
           <input type="text" id="employee_search" 
                  class="form-control" 
                  placeholder="Types Employee Name..."
-                 value="{{if .CommitmentFee}}{{.CommitmentFee.CompleteName}}{{end}}">
+                 value="{{if .OrderDo}}{{.OrderDo.EmployeeName}}{{end}}">
           
           <ul id="suggestions" class="list-group position-absolute w-100 shadow-sm" style="display:none; z-index:1000; max-height:200px; overflow-y:auto;"></ul>
           
@@ -74,7 +74,7 @@
           <input type="hidden" 
                  id="employee_card_number" 
                  name="employee_card_number"
-                 value="{{if .CommitmentFee}}{{.CommitmentFee.EmployeeCardNumber}}{{end}}"
+                 value="{{if .OrderDo}}{{.OrderDo.EmployeeCardNumber}}{{end}}"
                  required>
           
                </div>
@@ -85,7 +85,7 @@
                  class="form-control" 
                  readonly 
                  placeholder="No. Kartu Karyawan"
-                 value="{{if .CommitmentFee}}{{.CommitmentFee.EmployeeCardNumber}}{{end}}">
+                 value="{{if .OrderDo}}{{.OrderDo.EmployeeCardNumber}}{{end}}">
      
       </div>
       <div class="row">
@@ -145,12 +145,19 @@
             <td><input type="number" step="0.01" name="price[]" class="form-control form-control-sm price-inp" readonly></td>
             <td><input type="text" name="document_number[]" class="form-control form-control-sm document_number-inp"></td>
 
-            <!-- KOLOM TAMBAHAN: Checkbox SP Processed -->
+           <!-- KOLOM TAMBAHAN: Checkbox SP Processed -->
             <td class="text-center align-middle">
-              <input type="checkbox" class="form-check-input is-sp-processed-chk">
-              <!-- Hidden input penampung nilai 0 atau 1 untuk payload/form submit -->
-              <input type="hidden" name="is_sharing_profit_processed[]" class="is-sp-processed-inp" value="0">
-            </td> 
+              <!-- Checkbox UI -->
+              <input type="checkbox" 
+                    class="form-check-input is-sp-processed-chk"
+                    {{if .IsSharingProfitProcessed}}checked{{end}}>
+
+              <!-- Hidden input penampung nilai 0 atau 1 untuk dikirim ke backend -->
+              <input type="hidden" 
+                    name="is_sharing_profit_processed[]" 
+                    class="is-sp-processed-inp" 
+                    value="{{if .IsSharingProfitProcessed}}1{{else}}0{{end}}">
+            </td>
             <td><button type="button" class="btn btn-sm btn-outline-danger remove-row">&times;</button></td>
           </tr>
         </tbody>
@@ -189,14 +196,32 @@
     }
 
     // 1. Event Listener Event Delegation untuk Checkbox SP Processed (Vanilla JS menggantikan jQuery $)
-    document.addEventListener('change', function (e) {
-      if (e.target && e.target.classList.contains('is-sp-processed-chk')) {
-        const row = e.target.closest('tr');
-        const hiddenInp = row.querySelector('.is-sp-processed-inp');
-        if (hiddenInp) {
-          hiddenInp.value = e.target.checked ? '1' : '0';
-        }
+    // document.addEventListener('change', function (e) {
+    //   if (e.target && e.target.classList.contains('is-sp-processed-chk')) {
+    //     const row = e.target.closest('tr');
+    //     const hiddenInp = row.querySelector('.is-sp-processed-inp');
+    //     if (hiddenInp) {
+    //       hiddenInp.value = e.target.checked ? '1' : '0';
+    //     }
+    //   }
+    // });
+    
+    document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('#detailRowsBody tr').forEach(function (row) {
+    var chk = row.querySelector('.is-sp-processed-chk');
+    var inp = row.querySelector('.is-sp-processed-inp');
+    
+    if (chk && inp) {
+      // Jika hidden input bernilai "1" atau "true", centang checkbox-nya
+      if (inp.value === '1' || inp.value === 'true') {
+        chk.checked = true;
+        inp.value = '1'; // Konversi ke '1' agar seragam untuk payload POST
+      } else {
+        chk.checked = false;
+        inp.value = '0';
       }
+        }
+      });
     });
 
     // 2. Handler Datalist Customer

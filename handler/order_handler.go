@@ -20,6 +20,15 @@ func NewOrderHandler(api *client.APIClient) *OrderHandler {
 	return &OrderHandler{api: api}
 }
 
+func parseFormDate(value string) interface{} {
+	if value == "" {
+		return nil
+	}
+	if t, err := time.Parse("2006-01-02", value); err == nil {
+		return t
+	}
+	return nil
+}
 // loadLookups fetches suppliers, customers, and products so the order form
 // can offer autocomplete-by-name while still submitting the underlying ID
 // (SupplierID / CustID / ProductID) that the backend expects.
@@ -74,15 +83,7 @@ func (h *OrderHandler) ShowCreate(c *gin.Context) {
 	c.HTML(http.StatusOK, "order_template/create_update.html", data)
 }
 
-func parseFormDate(value string) interface{} {
-	if value == "" {
-		return nil
-	}
-	if t, err := time.Parse("2006-01-02", value); err == nil {
-		return t
-	}
-	return nil
-}
+
 
 // Create -> POST /orders/create : master fields + at least one detail line.
 func (h *OrderHandler) Create(c *gin.Context) {

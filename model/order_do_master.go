@@ -9,7 +9,7 @@ type OrderDoMaster struct {
 	CustomerID         string     `json:"customer_id"`
 	CustomerName       string     `json:"customer_name"`
 	EmployeeCardNumber int        `json:"employee_card_number"`
-	CompleteName       string     `json:"complete_name"`
+	EmployeeName       string     `json:"employee_name"`
 	Shipment           string     `json:"shipment"`
 	ShipNumber         string     `json:"ship_number"`
 	DriverNumber       string     `json:"driver_number"`

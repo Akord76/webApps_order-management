@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
+	"time"
 
 	"webApps_order-management/client"
 	"webApps_order-management/model"
@@ -17,6 +19,27 @@ type OrderDoHandler struct {
 
 func NewOrderDoHandler(api *client.APIClient) *OrderDoHandler {
 	return &OrderDoHandler{api: api}
+}
+
+// parseFormDate mengonversi string "2026-09-06" dari HTML form menjadi format RFC3339 string/time
+func parseFormDates(dateStr string) interface{} {
+	dateStr = strings.TrimSpace(dateStr)
+	if dateStr == "" {
+		return nil
+	}
+
+	// Coba parse format HTML input date (YYYY-MM-DD)
+	if t, err := time.Parse("2006-01-02", dateStr); err == nil {
+		// Kembalikan format RFC3339 yang disukai oleh API backend (Go time.Time default)
+		return t.Format(time.RFC3339)
+	}
+
+	// Jika sudah berformat RFC3339 atau ISO string
+	if t, err := time.Parse(time.RFC3339, dateStr); err == nil {
+		return t.Format(time.RFC3339)
+	}
+
+	return nil
 }
 
 // LookupCustomers proxies GET /api/customers/getCustomers/autocomplete/:custName.
@@ -251,12 +274,20 @@ func (h *OrderDoHandler) Update(c *gin.Context) {
 		"ship_number":          c.PostForm("ship_number"),
 		"driver_number":        c.PostForm("driver_number"),
 		"description":          c.PostForm("description"),
-		"status":               c.PostForm("status_do"),
+		"status_do":            c.PostForm("status_do"),
 		"updated_at":           c.PostForm("updated_at"),
 	}
-	if d := parseFormDate(c.PostForm("order_do_date")); d != nil {
+	// 1. Ambil input order_date dari form HTML
+	orderDODateStr := c.PostForm("order_do_date")
+
+	if d := parseFormDates(orderDODateStr); d != nil {
 		body["order_do_date"] = d
+	} else {
+		body["order_do_date"] = time.Now().Format(time.RFC3339)
 	}
+
+	// 2. Untuk updated_at, selalu berikan waktu UTC sekarang dalam format RFC3339
+	body["updated_at"] = time.Now().Format(time.RFC3339)
 
 	if err := h.api.Put(path, token(c), body, nil); err != nil {
 		osn, _ := strconv.Atoi(orderDoID)
