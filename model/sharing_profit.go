@@ -5,7 +5,7 @@ import "time"
 type SharingProfit struct {
 	SharingProfitNum         int        `json:"sharing_profit_num"`
 	SharingProfitID          string     `json:"sharing_profit_id"`
-	SharingProfitDate        time.Time  `json:"sharing_profit_date"`
+	SharingProfitDate        string     `json:"sharing_profit_date"`
 	OrderDoNo                string     `json:"order_do_dtno"`
 	ProductID                string     `json:"product_id"`
 	Qty                      int        `json:"qty"`
@@ -17,7 +17,7 @@ type SharingProfit struct {
 	UpdatedAt                *time.Time `json:"updated_at,omitempty"`
 
 	// Field pendukung untuk JOIN tampilan (menggunakan int sesuai tipe kolom di DB)
-	EmployeeCardNumber int    `json:"employee_card_number"`
+	EmployeeCardNumber int    `json:"employee_card_number" gorm:"column:EmployeeCardNumber"` // Wajib Huruf Kapital
 	EmployeeName       string `json:"employee_name"`
 	OrderNo            string `json:"order_no"`
 	ItemName           string `json:"item_name"`

@@ -3,7 +3,8 @@
 <head>{{template "head" .}}</head>
 <body>
 {{template "navbar" .}}
-<div class="container">
+
+<div class="container py-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3>Orders</h3>
     {{if .CanWrite}}<a href="/orders/create" class="btn btn-primary">+ New Order</a>{{end}}
@@ -11,27 +12,45 @@
 
   {{template "alerts" .}}
 
-  <div class="card">
+  <div class="card shadow-sm">
+    <!-- Header Search -->
+    <div class="card-header bg-white py-3">
+      <div class="row g-2 justify-content-between align-items-center">
+        <div class="col-md-4">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" id="searchInput" class="form-control" placeholder="Search orders...">
+          </div>
+        </div>
+        <div class="col-md-3 text-md-end">
+          <small class="text-muted" id="pageInfo">Showing 0 entries</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
     <div class="table-responsive">
-      <table class="table table-hover mb-0">
-        <thead>
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
           <tr>
             <th>Order ID</th>
             <th>Order No</th>
             <th>Order Date</th>
-            <th>Customer ID</th>
+            <th>Customer</th>
             <th>Supplier From</th>
+            <th>Status PO</th>
             <th class="text-end">Actions</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="ordersTableBody">
           {{range .Orders}}
-          <tr>
+          <tr class="order-row">
             <td>{{.OrderID}}</td>
-            <td>{{.OrderNo}}</td>
+            <td><strong>{{.OrderNo}}</strong></td>
             <td>{{if .OrderDate}}{{.OrderDate.Format "2006-01-02"}}{{end}}</td>
             <td>{{.CustomerID}}-{{.CustomerName}}</td>
             <td>{{.SupplierFrom}}</td>
+            <td>{{.Status_Po}}</td>
             <td class="text-end">
               <a href="/orders/{{.OrderID}}/{{.OrderNo}}" class="btn btn-sm btn-outline-secondary">View</a>
               {{if $.CanWrite}}
@@ -44,13 +63,46 @@
             </td>
           </tr>
           {{else}}
-          <tr><td colspan="6" class="text-center text-muted py-4">No orders found.</td></tr>
+          <tr><td colspan="7" class="text-center text-muted py-4">No orders found.</td></tr>
           {{end}}
         </tbody>
       </table>
     </div>
+
+    <!-- Footer Pagination -->
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+      <div class="d-flex align-items-center gap-2">
+        <span class="small text-muted">Rows per page:</span>
+        <select id="rowsPerPage" class="form-select form-select-sm" style="width: 70px;">
+          <option value="5">5</option>
+          <option value="10" selected>10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+
+      <nav aria-label="Pagination">
+        <ul class="pagination pagination-sm mb-0" id="paginationNav"></ul>
+      </nav>
+    </div>
   </div>
 </div>
+
 {{template "footer" .}}
+
+<!-- Load File JS & Inisialisasi -->
+<script src="/static/js/search_pagination.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    initTableSearchAndPagination({
+      searchInputId: 'searchInput',
+      rowsPerPageId: 'rowsPerPage',
+      tableBodyId: 'ordersTableBody',
+      rowClass: '.order-row',
+      paginationNavId: 'paginationNav',
+      pageInfoId: 'pageInfo'
+    });
+  });
+</script>
 </body>
 </html>

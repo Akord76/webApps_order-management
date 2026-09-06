@@ -107,6 +107,7 @@ func (h *OrderDoHandler) ShowCreate(c *gin.Context) {
 	c.HTML(http.StatusOK, "order_do_template/create_update.html", data)
 }
 
+// Create handles POST /orderdo : create new order sale with details.
 func (h *OrderDoHandler) Create(c *gin.Context) {
 	orderDoID, _ := strconv.Atoi(c.PostForm("order_do_id"))
 	orderDoNo := c.PostForm("order_do_no")
@@ -122,7 +123,6 @@ func (h *OrderDoHandler) Create(c *gin.Context) {
 	qtys := c.PostFormArray("qty[]")
 	prices := c.PostFormArray("price[]")
 	documentNumbers := c.PostFormArray("document_number[]")
-	employeeCardNumbers := c.PostFormArray("employee_card_number[]")
 	isSharingProfitProcesseds := c.PostFormArray("is_sharing_profit_processed[]")
 
 	details := make([]gin.H, 0, len(productIDs))
@@ -156,11 +156,11 @@ func (h *OrderDoHandler) Create(c *gin.Context) {
 			documentNumber = documentNumbers[i]
 		}
 
-		employeeCardNumber := 0
-		if i < len(employeeCardNumbers) {
-			employeeCardNumber, _ = strconv.Atoi(employeeCardNumbers[i])
-		}
-	// Convert isSharingProfitProcessed to boolean
+		// employeeCardNumber := 0
+		// if i < len(employeeCardNumbers) {
+		// 	employeeCardNumber, _ = strconv.Atoi(employeeCardNumbers[i])
+		// }
+		// Convert isSharingProfitProcessed to boolean
 		isSharingProfitProcessed := false
 		if i < len(isSharingProfitProcesseds) {
 			val := isSharingProfitProcesseds[i]
@@ -176,7 +176,6 @@ func (h *OrderDoHandler) Create(c *gin.Context) {
 			"qty":                         qty,
 			"price":                       price,
 			"document_number":             documentNumber,
-			"employee_card_number":        employeeCardNumber,
 			"is_sharing_profit_processed": isSharingProfitProcessed,
 		})
 	}
@@ -235,7 +234,7 @@ func (h *OrderDoHandler) ShowEdit(c *gin.Context) {
 	c.HTML(http.StatusOK, "order_do_template/create_update.html", data)
 }
 
-// Update -> POST /orderdo/:orderDoNo/:orderDoID/edit : master fields only.
+// Update Header-> POST /orderdo/:orderDoNo/:orderDoID/edit : master fields only.
 func (h *OrderDoHandler) Update(c *gin.Context) {
 
 	orderDoID := c.Param("orderDoID")
@@ -292,7 +291,7 @@ func (h *OrderDoHandler) AddDetail(c *gin.Context) {
 
 	qty, _ := strconv.Atoi(c.PostForm("qty"))
 	price, _ := strconv.ParseFloat(c.PostForm("price"), 64)
-	employeeCardNumber, _ := strconv.Atoi(c.PostForm("employee_card_number"))
+
 	body := gin.H{
 		"order_do_dtno":               c.PostForm("order_do_dtno"),
 		"order_no":                    c.PostForm("order_no"),
@@ -302,7 +301,6 @@ func (h *OrderDoHandler) AddDetail(c *gin.Context) {
 		"qty":                         qty,
 		"price":                       price,
 		"document_number":             c.PostForm("document_number"),
-		"employee_card_number":        employeeCardNumber,
 		"is_sharing_profit_processed": c.PostForm("is_sharing_profit_processed") == "true",
 	}
 

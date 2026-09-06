@@ -20,36 +20,59 @@
   {{template "alerts" .}}
 
   <div class="card shadow-sm">
+    <!-- Header Search -->
+    <div class="card-header bg-white py-3">
+      <div class="row g-2 justify-content-between align-items-center">
+        <div class="col-md-4">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" id="searchSP" class="form-control" placeholder="Search sharing profit records...">
+          </div>
+        </div>
+        <div class="col-md-3 text-md-end">
+          <small class="text-muted" id="spPageInfo">Showing 0 entries</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
     <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
+      <table class="table table-hover align-middle mb-0" id="sharingProfitTable"  
+             style="min-width: 1000px; font-size: 0.8rem;">
         <thead class="table-light">
           <tr>
             <th>Num</th>
             <th>Sharing Profit ID</th>
             <th>Date</th>
             <th>Employee</th>
-            <th>Order No</th>
             <th>DO Number</th>
             <th>Item Name</th>
             <th>Qty</th>
             <th>Share Value</th>
-            <th>Commitment ID</th>
+            <th>Total Share Value</th>
             {{if .CanWrite}}<th class="text-end">Actions</th>{{end}}
           </tr>
         </thead>
-        <tbody>
+        <tbody id="spTableBody">
           {{range .SharingProfits}}
-          <tr>
+          <tr class="sp-row">
             <td>{{.SharingProfitNum}}</td>
-            <td><strong>{{.SharingProfitID}}</strong></td>
+            <td><strong><code>{{.SharingProfitID}}</code></strong></td>
             <td>{{.SharingProfitDate}}</td>
-            <td>{{.EmployeeCardNumber}}</td>
-            <td>{{.OrderNo}}</td>
+            <td>   
+                {{if .EmployeeName}}
+                  {{.EmployeeName}} <small class="text-muted">(<code>{{.EmployeeCardNumber}}</code>)</small>
+                {{else if .EmployeeCardNumber}}
+                  {{.EmployeeCardNumber}}
+                {{else}}
+                  -
+                {{end}}
+            </td>
             <td>{{.OrderDoNo}}</td>
-            <td>{{.ProductID}}</td>
+            <td>{{.ProductID}} | {{.ItemName}}</td>
             <td>{{.Qty}}</td>
-            <td><strong>{{.ShareValue}}</strong></td>
-            <td>{{.CommitmentID}}</td>
+            <td>{{.ShareValue}}</td>
+            <td><strong>{{.TotalShareValue}}</strong></td>
             {{if $.CanWrite}}
             <td class="text-end">
               <a href="/sharing-profits/{{.SharingProfitNum}}/{{.SharingProfitID}}" class="btn btn-sm btn-outline-secondary">View</a>
@@ -62,10 +85,31 @@
             {{end}}
           </tr>
           {{else}}
-          <tr><td colspan="9" class="text-center text-muted py-4">No sharing profit records found.</td></tr>
+          <tr>
+            <td colspan="{{if .CanWrite}}10{{else}}9{{end}}" class="text-center text-muted py-4">
+              No sharing profit records found.
+            </td>
+          </tr>
           {{end}}
         </tbody>
       </table>
+    </div>
+
+    <!-- Footer Pagination Client-Side -->
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+      <div class="d-flex align-items-center gap-2">
+        <span class="small text-muted">Rows per page:</span>
+        <select id="spRowsPerPage" class="form-select form-select-sm" style="width: 70px;">
+          <option value="5">5</option>
+          <option value="10" selected>10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+
+      <nav aria-label="Sharing profit pagination">
+        <ul class="pagination pagination-sm mb-0" id="spPaginationNav"></ul>
+      </nav>
     </div>
   </div>
 </div>
@@ -84,7 +128,7 @@
           <div class="mb-3">
             <label for="order_do_dtno" class="form-label">Order DO Number</label>
             <input type="text" class="form-control" id="order_do_dtno" name="order_do_dtno" placeholder="Masukkan Nomor Order DO" required>
-            <div class="form-text">Sistem akan otomatis menghitung Sharing Profit untuk seluruh item barang & karyawan terkait pada DO ini.</div>
+            <div class="form-text"><code>Sistem akan otomatis menghitung Sharing Profit untuk seluruh item barang & karyawan terkait pada DO ini.</code></div>
           </div>
         </div>
         <div class="modal-footer">
@@ -98,5 +142,20 @@
 {{end}}
 
 {{template "footer" .}}
+
+<!-- Load File JS Pagination & Inisialisasi -->
+<script src="/static/js/search_pagination.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    initTableSearchAndPagination({
+      searchInputId: 'searchSP',
+      rowsPerPageId: 'spRowsPerPage',
+      tableBodyId: 'spTableBody',
+      rowClass: '.sp-row',
+      paginationNavId: 'spPaginationNav',
+      pageInfoId: 'spPageInfo'
+    });
+  });
+</script>
 </body>
 </html>

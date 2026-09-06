@@ -16,7 +16,7 @@ type OrderDoDetail struct {
 	Price           float64 `json:"price"`
 
 	DocumentNumber string `json:"document_number"`
-	EmployeeCardNumber int        `json:"employee_card_number"`
+	//EmployeeCardNumber int        `json:"employee_card_number"`
 	IsSharingProfitProcessed bool   `json:"is_sharing_profit_processed"`
 }
 

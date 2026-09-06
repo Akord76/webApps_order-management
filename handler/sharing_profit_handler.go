@@ -57,7 +57,7 @@ func (h *SharingProfitHandler) ShowCreateForm(c *gin.Context) {
 	var sp model.SharingProfit
 
 	// Default date hari ini
-	sp.SharingProfitDate = time.Now()
+	sp.SharingProfitDate = time.Now().Format("2006-01-02")
 	sp.Qty = 1
 
 	// Pre-fill jika dibuka dari Detail DO
@@ -147,37 +147,19 @@ func (h *SharingProfitHandler) ShowEditForm(c *gin.Context) {
 
 	data := baseData(c, "Edit Sharing Profit")
 
-	apiURL := fmt.Sprintf("/sharing-profits/detail/%s/%s", num, id)
-	var apiRes struct {
-		Data    model.SharingProfit `json:"data"`
-		Success bool                `json:"success"`
-		Message string              `json:"message"`
-	}
+	// 1. Sesuaikan URL endpoint dengan route di Postman
+	apiURL := fmt.Sprintf("/sharing-profits/%s/%s", num, id)
 
-	if err := h.api.Get(apiURL, token(c), &apiRes); err != nil || !apiRes.Success {
-		c.Redirect(http.StatusSeeOther, "/sharing-profits?err="+url.QueryEscape("Gagal mengambil data Sharing Profit eksisting"))
+	// 2. Bind langsung ke struct model.SharingProfit (karena response JSON tanpa wrapper)
+	var spData model.SharingProfit
+
+	if err := h.api.Get(apiURL, token(c), &spData); err != nil {
+		c.Redirect(http.StatusSeeOther, "/sharing-profits?err="+url.QueryEscape("Gagal mengambil data Sharing Profit eksisting: "+err.Error()))
 		return
 	}
 
-	// Fetch data pendukung DO jika OrderDoNo tersedia
-	if apiRes.Data.OrderDoNo != "" {
-		doApiURL := fmt.Sprintf("/orderdo/detail-by-dono/%s", apiRes.Data.OrderDoNo)
-		var doRes struct {
-			Data struct {
-				OrderNo  string `json:"order_no"`
-				ItemName string `json:"item_name"`
-				Measure  string `json:"measure"`
-			} `json:"data"`
-			Success bool `json:"success"`
-		}
-		if err := h.api.Get(doApiURL, token(c), &doRes); err == nil && doRes.Success {
-			apiRes.Data.OrderNo = doRes.Data.OrderNo
-			apiRes.Data.ItemName = doRes.Data.ItemName
-			apiRes.Data.Measure = doRes.Data.Measure
-		}
-	}
-
-	data["SharingProfit"] = apiRes.Data
+	// 3. Data item_name, measure, dll. di Postman SUDAH TERSEDIA, jadi tidak perlu lagi hit API tambahan /orderdo/detail-by-dono
+	data["SharingProfit"] = spData
 	data["IsEdit"] = true
 
 	c.HTML(http.StatusOK, "sharing_profit_template/create_update.html", data)
@@ -248,4 +230,3 @@ func (h *SharingProfitHandler) EmployeeAutocomplete(c *gin.Context) {
 	// Kembalikan data JSON ke Frontend
 	c.JSON(http.StatusOK, apiRes)
 }
-

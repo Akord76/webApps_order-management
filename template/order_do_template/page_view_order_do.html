@@ -3,60 +3,110 @@
 <head>{{template "head" .}}</head>
 <body>
 {{template "navbar" .}}
-<div class="container">
+
+<div class="container py-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3>Delivery Order</h3>
-    {{if .CanWrite}}<a href="/orderdo/create" class="btn btn-primary">+ New Order </a>{{end}}
+    {{if .CanWrite}}<a href="/orderdo/create" class="btn btn-primary">+ New Order</a>{{end}}
   </div>
 
   {{template "alerts" .}}
 
-  <div class="card" style="width: 1300px;">
+  <div class="card shadow-sm">
+    <!-- Header Search -->
+    <div class="card-header bg-white py-3">
+      <div class="row g-2 justify-content-between align-items-center">
+        <div class="col-md-4">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" id="searchDO" class="form-control" placeholder="Search delivery orders...">
+          </div>
+        </div>
+        <div class="col-md-3 text-md-end">
+          <small class="text-muted" id="doPageInfo">Showing 0 entries</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
     <div class="table-responsive">
-      <table class="table table-hover mb-0">
-        <thead>
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
           <tr>
             <th>Do ID</th>
             <th>Do Num</th>
             <th>Do Date</th>
-            <th>Customer ID</th>
+            <th>Customer</th>
             <th>Shipment</th>
             <th>Ship Number</th>
             <th>Driver Number</th>
             <th>Description</th>
-            <th class="text-end" style="text-align: center;">Actions</th>
+            <th class="text-center">Actions</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="doTableBody">
           {{range .OrderDo}}
-          <tr>
+          <tr class="do-row">
             <td>{{.OrderDoID}}</td>
-            <td>{{.OrderDoNo}}</td>
+            <td><strong>{{.OrderDoNo}}</strong></td>
             <td>{{if .OrderDoDate}}{{.OrderDoDate.Format "2006-01-02"}}{{end}}</td>
             <td>{{.CustomerID}}-{{.CustomerName}}</td>
             <td>{{.Shipment}}</td>
             <td>{{.ShipNumber}}</td>
             <td>{{.DriverNumber}}</td>
             <td>{{.Description}}</td>
-            <td class="text-end" style="content: center; min-width: 80px;">
+            <td class="text-end" style="min-width: 150px;">
               <a href="/orderdo/{{.OrderDoID}}/{{.OrderDoNo}}" class="btn btn-sm btn-outline-secondary">View</a>
               {{if $.CanWrite}}
               <a href="/orderdo/{{.OrderDoID}}/{{.OrderDoNo}}/edit" class="btn btn-sm btn-outline-primary">Edit</a>
               <form method="POST" action="/orderdo/{{.OrderDoID}}/{{.OrderDoNo}}/delete" class="d-inline"
-                    onsubmit="return confirm('Delete this order  and all its details?');">
+                    onsubmit="return confirm('Delete this order and all its details?');">
                 <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
               </form>
               {{end}}
             </td>
           </tr>
           {{else}}
-          <tr><td colspan="6" class="text-center text-muted py-4">No Delivery Order found.</td></tr>
+          <tr><td colspan="9" class="text-center text-muted py-4">No Delivery Order found.</td></tr>
           {{end}}
         </tbody>
       </table>
     </div>
+
+    <!-- Footer Pagination -->
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+      <div class="d-flex align-items-center gap-2">
+        <span class="small text-muted">Rows per page:</span>
+        <select id="doRowsPerPage" class="form-select form-select-sm" style="width: 70px;">
+          <option value="5">5</option>
+          <option value="10" selected>10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+
+      <nav aria-label="DO table pagination">
+        <ul class="pagination pagination-sm mb-0" id="doPaginationNav"></ul>
+      </nav>
+    </div>
   </div>
 </div>
+
 {{template "footer" .}}
+
+<!-- Load JS & Inisialisasi Pagination -->
+<script src="/static/js/search_pagination.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    initTableSearchAndPagination({
+      searchInputId: 'searchDO',
+      rowsPerPageId: 'doRowsPerPage',
+      tableBodyId: 'doTableBody',
+      rowClass: '.do-row',
+      paginationNavId: 'doPaginationNav',
+      pageInfoId: 'doPageInfo'
+    });
+  });
+</script>
 </body>
 </html>

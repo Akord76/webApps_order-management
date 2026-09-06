@@ -12,7 +12,8 @@
   {{template "alerts" .}}
 
   <div class="card p-4">
-    <form method="POST" action="{{if .IsEdit}}/orders/{{.Order.OrderID}}/{{.Order.OrderNo}}/edit{{else}}/orders/create{{end}}">
+    <!-- Tambahkan data-is-edit di elemen Form -->
+    <form id="orderForm" data-is-edit="{{if .IsEdit}}true{{else}}false{{end}}" method="POST" action="{{if .IsEdit}}/orders/{{.Order.OrderID}}/{{.Order.OrderNo}}/edit{{else}}/orders/create{{end}}">
       <div class="row">
         <div class="col-md-6 mb-3">
           <label class="form-label">Order ID</label>
@@ -29,7 +30,7 @@
         <div class="col-md-6 mb-3">
           <label class="form-label">Order Date</label>
           <input type="date" name="order_date" class="form-control"
-                 value="{{if .Order.OrderDate}}{{.Order.OrderDate.Format "2006-01-02"}}{{end}}">
+                 value='{{if .Order.OrderDate}}{{.Order.OrderDate.Format "2006-01-02"}}{{end}}'>
         </div>
 
         <!-- Supplier From: search by name, submit SupplierID -->
@@ -46,26 +47,31 @@
         </div>
       </div>
 
-      <!-- Customer: search by name, submit CustID -->
-      <div class="mb-3">
-        <label class="form-label">Customer</label>
-        <input type="text" id="customerSearch" class="form-control" list="customerOptions"
-               placeholder="Search customer by name" autocomplete="off"
-               value="{{range .Customers}}{{if eq .CustID $.Order.CustomerID}}{{.CustName}}{{end}}{{end}}">
-        <datalist id="customerOptions">
-          {{range .Customers}}<option data-id="{{.CustID}}" value="{{.CustName}}"></option>{{end}}
-        </datalist>
-        <input type="hidden" name="customer_id" id="customerID" value="{{.Order.CustomerID}}">
-        <div class="form-text">Type to search, then pick a customer from the list.</div>
+      <div class="row">
+        <!-- Customer: search by name, submit CustID -->
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Customer</label>
+          <input type="text" id="customerSearch" class="form-control" list="customerOptions"
+                 placeholder="Search customer by name" autocomplete="off"
+                 value="{{range .Customers}}{{if eq .CustID $.Order.CustomerID}}{{.CustName}}{{end}}{{end}}">
+          <datalist id="customerOptions">
+            {{range .Customers}}<option data-id="{{.CustID}}" value="{{.CustName}}"></option>{{end}}
+          </datalist>
+          <input type="hidden" name="customer_id" id="customerID" value="{{.Order.CustomerID}}">
+          <div class="form-text">Type to search, then pick a customer from the list.</div>
+        </div>
+
+        <!-- Document Number (Sejajar di sebelah kanan Customer) -->
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Document Number</label>
+          <input type="text" name="document_number" class="form-control" maxlength="20" value="{{.Order.DocumentNumber}}">
+        </div>
       </div>
 
+      <!-- Description (Berada di baris baru setelahnya) -->
       <div class="mb-3">
         <label class="form-label">Description</label>
         <input type="text" name="description" class="form-control" maxlength="100" value="{{.Order.Description}}">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Document Number</label>
-        <input type="text" name="document_number" class="form-control" maxlength="20" value="{{.Order.DocumentNumber}}">
       </div>
 
       {{if not .IsEdit}}
@@ -88,7 +94,6 @@
             <td>
               <input type="text" class="form-control product-search" list="productOptions"
                      placeholder="Search product name" autocomplete="off" required>
-              <!-- Submitted value is the ProductID, not the free-text name -->
               <input type="hidden" name="item_name[]" class="item-name-hidden">
               <input type="hidden" name="product_id[]" class="product-id-hidden">
             </td>
@@ -115,17 +120,24 @@
 </div>
 
 <script>
-// Generic "search by name, resolve to ID" binder for a single input +
-// its <datalist> + a hidden field that actually gets submitted.
+// Generic "search by name, resolve to ID" binder
 function bindAutocomplete(searchInput, datalist, hiddenInput) {
   if (!searchInput || !datalist || !hiddenInput) return;
-  searchInput.addEventListener('input', function () {
+  
+  function updateHiddenValue() {
     var match = null;
-    datalist.querySelectorAll('option').forEach(function (opt) {
-      if (opt.value === searchInput.value) match = opt;
-    });
+    var opts = datalist.querySelectorAll('option');
+    for (var i = 0; i < opts.length; i++) {
+      if (opts[i].value === searchInput.value) {
+        match = opts[i];
+        break;
+      }
+    }
     hiddenInput.value = match ? match.getAttribute('data-id') : '';
-  });
+  }
+
+  searchInput.addEventListener('input', updateHiddenValue);
+  searchInput.addEventListener('change', updateHiddenValue);
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -139,58 +151,69 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('customerOptions'),
     document.getElementById('customerID')
   );
-});
 
-{{if not .IsEdit}}
-function bindProductRow(row) {
-  var search = row.querySelector('.product-search');
-  var hiddenItemName = row.querySelector('.item-name-hidden');
-  var hiddenProductId = row.querySelector('.product-id-hidden');
-  var datalist = document.getElementById('productOptions');
-  bindAutocomplete(search, datalist, hiddenItemName);
-  // keep product_id[] in sync with the same selection
-  search.addEventListener('input', function () {
-    var match = null;
-    datalist.querySelectorAll('option').forEach(function (opt) {
-      if (opt.value === search.value) match = opt;
-    });
-    hiddenProductId.value = match ? match.getAttribute('data-id') : '';
-  });
-}
+  var form = document.getElementById('orderForm');
+  var isEdit = form && form.getAttribute('data-is-edit') === 'true';
 
-document.querySelectorAll('#detailRowsBody tr').forEach(bindProductRow);
+  // Jalankan logika baris detail hanya jika bukan mode Edit
+  if (!isEdit) {
+    function bindProductRow(row) {
+      var search = row.querySelector('.product-search');
+      var hiddenItemName = row.querySelector('.item-name-hidden');
+      var hiddenProductId = row.querySelector('.product-id-hidden');
+      var datalist = document.getElementById('productOptions');
 
-document.getElementById('addRow').addEventListener('click', function () {
-  var body = document.getElementById('detailRowsBody');
-  var row = body.rows[0].cloneNode(true);
-  row.querySelectorAll('input').forEach(function (input) { input.value = ''; });
-  body.appendChild(row);
-  bindProductRow(row);
-});
+      bindAutocomplete(search, datalist, hiddenItemName);
+      bindAutocomplete(search, datalist, hiddenProductId);
+    }
 
-document.getElementById('detailRowsBody').addEventListener('click', function (e) {
-  if (e.target.classList.contains('remove-row')) {
-    var body = document.getElementById('detailRowsBody');
-    if (body.rows.length > 1) {
-      e.target.closest('tr').remove();
+    // Bind semua baris yang ada saat awal dimuat
+    document.querySelectorAll('#detailRowsBody tr').forEach(bindProductRow);
+
+    // Event tambah baris
+    var addRowBtn = document.getElementById('addRow');
+    if (addRowBtn) {
+      addRowBtn.addEventListener('click', function () {
+        var body = document.getElementById('detailRowsBody');
+        if (!body || body.rows.length === 0) return;
+
+        var row = body.rows[0].cloneNode(true);
+        row.querySelectorAll('input').forEach(function (input) { input.value = ''; });
+        body.appendChild(row);
+        bindProductRow(row);
+      });
+    }
+
+    // Event hapus baris
+    var detailBody = document.getElementById('detailRowsBody');
+    if (detailBody) {
+      detailBody.addEventListener('click', function (e) {
+        if (e.target && e.target.classList.contains('remove-row')) {
+          if (detailBody.rows.length > 1) {
+            e.target.closest('tr').remove();
+          } else {
+            alert('Minimal harus ada 1 baris detail.');
+          }
+        }
+      });
+    }
+
+    // Validasi submit form
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        var rows = document.querySelectorAll('#detailRowsBody tr');
+        for (var i = 0; i < rows.length; i++) {
+          var hidden = rows[i].querySelector('.item-name-hidden');
+          if (!hidden || !hidden.value) {
+            e.preventDefault();
+            alert('Please pick a product from the list for every detail line (row ' + (i + 1) + ').');
+            return;
+          }
+        }
+      });
     }
   }
 });
-
-// Guard against submitting a row where the user typed something that
-// doesn't match any product in the list (hidden item_name[] stays empty).
-document.querySelector('form').addEventListener('submit', function (e) {
-  var rows = document.querySelectorAll('#detailRowsBody tr');
-  for (var i = 0; i < rows.length; i++) {
-    var hidden = rows[i].querySelector('.item-name-hidden');
-    if (!hidden.value) {
-      e.preventDefault();
-      alert('Please pick a product from the list for every detail line (row ' + (i + 1) + ').');
-      return;
-    }
-  }
-});
-{{end}}
 </script>
 
 {{template "footer" .}}

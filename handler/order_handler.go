@@ -120,6 +120,7 @@ func (h *OrderHandler) Create(c *gin.Context) {
 		"customer_id":     c.PostForm("customer_id"),
 		"description":     c.PostForm("description"),
 		"document_number": c.PostForm("document_number"),
+		"status_po":       c.PostForm("status_po"),
 		"details":         details,
 	}
 	if d := parseFormDate(c.PostForm("order_date")); d != nil {
@@ -167,6 +168,7 @@ func (h *OrderHandler) Update(c *gin.Context) {
 		"customer_id":     c.PostForm("customer_id"),
 		"description":     c.PostForm("description"),
 		"document_number": c.PostForm("document_number"),
+		"status_po":       c.PostForm("status_po"),
 	}
 	if d := parseFormDate(c.PostForm("order_date")); d != nil {
 		body["order_date"] = d
