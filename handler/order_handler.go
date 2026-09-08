@@ -60,7 +60,7 @@ func (h *OrderHandler) List(c *gin.Context) {
 func (h *OrderHandler) Detail(c *gin.Context) {
 	orderID := c.Param("orderID")
 	orderNo := c.Query("orderNo")
-	
+
 	// Calls Backend: GET /orders/:orderID?orderNo=xxx
 	path := fmt.Sprintf("/orders/%s?orderNo=%s", orderID, url.QueryEscape(orderNo))
 
@@ -109,10 +109,11 @@ func (h *OrderHandler) Create(c *gin.Context) {
 			measure = measures[i]
 		}
 		details = append(details, gin.H{
-			"item_name": itemNames[i],
-			"measure":   measure,
-			"qty":       qty,
-			"price":     price,
+			"order_no":   orderNo,
+			"product_id": itemNames[i],
+			"measure":    measure,
+			"qty":        qty,
+			"price":      price,
 		})
 	}
 
@@ -147,7 +148,7 @@ func (h *OrderHandler) Create(c *gin.Context) {
 func (h *OrderHandler) ShowEdit(c *gin.Context) {
 	orderID := c.Param("orderID")
 	orderNo := c.Query("orderNo")
-	
+
 	// Calls Backend: GET /orders/:orderID?orderNo=xxx
 	path := fmt.Sprintf("/orders/%s?orderNo=%s", orderID, url.QueryEscape(orderNo))
 
@@ -167,7 +168,7 @@ func (h *OrderHandler) ShowEdit(c *gin.Context) {
 func (h *OrderHandler) Update(c *gin.Context) {
 	orderID := c.Param("orderID")
 	orderNo := c.Query("orderNo")
-	
+
 	// Calls Backend: PUT /orders/:orderID?orderNo=xxx
 	path := fmt.Sprintf("/orders/%s?orderNo=%s", orderID, url.QueryEscape(orderNo))
 
@@ -199,7 +200,7 @@ func (h *OrderHandler) Update(c *gin.Context) {
 func (h *OrderHandler) Delete(c *gin.Context) {
 	orderID := c.Param("orderID")
 	orderNo := c.Query("orderNo")
-	
+
 	// Calls Backend: DELETE /orders/:orderID?orderNo=xxx
 	path := fmt.Sprintf("/orders/%s?orderNo=%s", orderID, url.QueryEscape(orderNo))
 
@@ -221,10 +222,11 @@ func (h *OrderHandler) AddDetail(c *gin.Context) {
 	price, _ := strconv.ParseFloat(c.PostForm("price"), 64)
 
 	body := gin.H{
-		"item_name": c.PostForm("item_name"),
-		"measure":   c.PostForm("measure"),
-		"qty":       qty,
-		"price":     price,
+		"order_no":   orderNo,
+		"product_id": c.PostForm("product_id"),
+		"measure":    c.PostForm("measure"),
+		"qty":        qty,
+		"price":      price,
 	}
 
 	// Calls Backend: POST /orders/details?orderNo=xxx
