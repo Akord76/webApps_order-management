@@ -30,8 +30,11 @@
     </dl>
     {{if .CanWrite}}
     <div class="mt-3">
-      <a href="/orders/{{.Order.OrderID}}/{{.Order.OrderNo}}/edit" class="btn btn-primary">Edit</a>
-      <form method="POST" action="/orders/{{.Order.OrderID}}/{{.Order.OrderNo}}/delete" class="d-inline"
+      <a href="/orders/edit/{{.OrderID}}?orderNo={{urlquery .OrderNo}}" 
+         class="btn btn-primary">Edit</a>
+      <form method="POST" 
+            action="/orders/delete/{{.OrderID}}?orderNo={{urlquery .OrderNo}}"
+            class="d-inline"
             onsubmit="return confirm('Delete this order and all its details?');">
         <button type="submit" class="btn btn-danger">Delete Order</button>
       </form>
@@ -66,12 +69,14 @@
           <td>{{.FormatPrice}}</td>
           <td>{{.FormatTotal}}</td>
           {{if $.CanWrite}}
+
           <td class="text-end">
-            <form method="POST" action="/orders/{{$.Order.OrderID}}/{{$.Order.OrderNo}}/details/{{.OrderDetailNo}}/delete"
-                  onsubmit="return confirm('Remove this line?');">
-              <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
-            </form>
-          </td>
+          <form method="POST" 
+                action="/orders/details/{{$.Order.OrderID}}/delete/{{.OrderDetailNo}}?orderNo={{urlquery $.Order.OrderNo}}"
+                onsubmit="return confirm('Remove this line?');">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+          </form>
+        </td>
           {{end}}
         </tr>
         {{else}}
@@ -92,16 +97,28 @@
     <h6>Add Detail Line</h6>
     <p class="text-muted small mb-2">Search by product name — the product's ID is what gets saved.</p>
     <datalist id="productOptions">
-      {{range .Products}}<option data-id="{{.ProductID}}" value="{{.ProductName}}"></option>{{end}}
+      {{range .Products}}
+      <option 
+      data-id="{{.ProductID}}" 
+      data-measure="{{.Measure}}" 
+      value="{{.ProductName}}">
+    </option>{{end}}
     </datalist>
-    <form method="POST" action="/orders/{{.Order.OrderID}}/{{.Order.OrderNo}}/details" class="row g-2" id="addDetailForm">
+    <form method="POST" 
+      action="/orders/details/{{.Order.OrderID}}/add?orderNo={{urlquery .Order.OrderNo}}" 
+      class="row g-2" 
+      id="addDetailForm">
       <div class="col-md-4">
-        <input type="text" id="productSearch" class="form-control" list="productOptions"
+        <input type="text" id="productSearch" 
+               class="form-control" 
+               list="productOptions"
                placeholder="Search product name" autocomplete="off" required>
         <input type="hidden" name="item_name" id="itemNameHidden">
       </div>
       <div class="col-md-2">
-        <input type="text" name="measure" class="form-control" placeholder="Measure" maxlength="20">
+        <input type="text" name="measure" 
+               class="form-control" placeholder="Measure" 
+               maxlength="20" id="measureInput">
       </div>
       <div class="col-md-2">
         <input type="number" name="qty" class="form-control" placeholder="Qty" required>
@@ -118,13 +135,23 @@
         var search = document.getElementById('productSearch');
         var datalist = document.getElementById('productOptions');
         var hidden = document.getElementById('itemNameHidden');
+        var measure = document.getElementById('measureInput');
+                
         search.addEventListener('input', function () {
           var match = null;
           datalist.querySelectorAll('option').forEach(function (opt) {
             if (opt.value === search.value) match = opt;
           });
           hidden.value = match ? match.getAttribute('data-id') : '';
+          measure.value = match ? match.getAttribute('data-measure') : '';
         });
+        //set autofocus to Qty input when product is selected
+        search.addEventListener('change', function () {
+          if (hidden.value) {
+            document.querySelector('input[name="qty"]').focus();
+          }
+        });
+        
         document.getElementById('addDetailForm').addEventListener('submit', function (e) {
           if (!hidden.value) {
             e.preventDefault();

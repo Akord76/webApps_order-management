@@ -177,25 +177,26 @@ func SetupRouter(jwtSecret, cookieName string, h *Handlers) *gin.Engine {
 		suppliers.POST("/:supplierNumber/:supplierID/delete", h.Supplier.Delete)
 	}
 
-	// Orders — MANAGER/ADMIN write, everyone (incl. USER) reads.
-	// The backend API enforces this too; RequireRoles here just keeps the
-	// UI from offering actions the API would reject anyway.
 	orders := protected.Group("/orders")
 	{
 		orders.GET("", h.Order.List)
-		orders.GET("/:orderID/:orderNo", h.Order.Detail)
+		// Detail View: /orders/details/10?orderNo=ORD-001
+		orders.GET("/details/:orderID", h.Order.Detail)
 
 		write := orders.Group("")
 		write.Use(middleware.RequireRoles(middleware.RoleAdmin, middleware.RoleManager))
 		{
 			write.GET("/create", h.Order.ShowCreate)
 			write.POST("/create", h.Order.Create)
-			write.GET("/:orderID/:orderNo/edit", h.Order.ShowEdit)
-			write.POST("/:orderID/:orderNo/edit", h.Order.Update)
-			write.POST("/:orderID/:orderNo/delete", h.Order.Delete)
-			write.POST("/:orderID/:orderNo/details", h.Order.AddDetail)
-			write.POST("/:orderID/:orderNo/details/:orderDetailNo/delete", h.Order.DeleteDetail)
-
+			
+			// Edit Views & Actions
+			write.GET("/edit/:orderID", h.Order.ShowEdit)
+			write.POST("/edit/:orderID", h.Order.Update)
+			write.POST("/delete/:orderID", h.Order.Delete)
+			
+			// Detail Management
+			write.POST("/details/:orderID/add", h.Order.AddDetail)
+			write.POST("/details/:orderID/delete/:detailID", h.Order.DeleteDetail)
 		}
 	}
 
@@ -263,7 +264,6 @@ func SetupRouter(jwtSecret, cookieName string, h *Handlers) *gin.Engine {
 			spWrite.POST("/:num/:id/delete", h.SharingProfit.Delete)
 		}
 	}
-
 
 	return r
 }

@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -29,9 +31,7 @@ func parseFormDate(value string) interface{} {
 	}
 	return nil
 }
-// loadLookups fetches suppliers, customers, and products so the order form
-// can offer autocomplete-by-name while still submitting the underlying ID
-// (SupplierID / CustID / ProductID) that the backend expects.
+
 func (h *OrderHandler) loadLookups(c *gin.Context, data gin.H) {
 	var suppliers []model.Supplier
 	if err := h.api.Get("/suppliers", token(c), &suppliers); err == nil {
@@ -58,10 +58,15 @@ func (h *OrderHandler) List(c *gin.Context) {
 }
 
 func (h *OrderHandler) Detail(c *gin.Context) {
-	path := "/orders/" + c.Param("orderID") + "/" + c.Param("orderNo")
+	orderID := c.Param("orderID")
+	orderNo := c.Query("orderNo")
+	
+	// Calls Backend: GET /orders/:orderID?orderNo=xxx
+	path := fmt.Sprintf("/orders/%s?orderNo=%s", orderID, url.QueryEscape(orderNo))
 
 	var order model.OrderMaster
 	if err := h.api.Get(path, token(c), &order); err != nil {
+		log.Printf("Failed to fetch order details: %v", err)
 		c.Redirect(http.StatusFound, "/orders?err="+url.QueryEscape("Order not found"))
 		return
 	}
@@ -83,9 +88,6 @@ func (h *OrderHandler) ShowCreate(c *gin.Context) {
 	c.HTML(http.StatusOK, "order_template/create_update.html", data)
 }
 
-
-
-// Create -> POST /orders/create : master fields + at least one detail line.
 func (h *OrderHandler) Create(c *gin.Context) {
 	orderID, _ := strconv.Atoi(c.PostForm("order_id"))
 	orderNo := c.PostForm("order_no")
@@ -128,6 +130,7 @@ func (h *OrderHandler) Create(c *gin.Context) {
 		body["order_date"] = d
 	}
 
+	// Calls Backend: POST /orders
 	if err := h.api.Post("/orders", token(c), body, nil); err != nil {
 		data := baseData(c, "New Order")
 		data["IsEdit"] = false
@@ -142,7 +145,11 @@ func (h *OrderHandler) Create(c *gin.Context) {
 }
 
 func (h *OrderHandler) ShowEdit(c *gin.Context) {
-	path := "/orders/" + c.Param("orderID") + "/" + c.Param("orderNo")
+	orderID := c.Param("orderID")
+	orderNo := c.Query("orderNo")
+	
+	// Calls Backend: GET /orders/:orderID?orderNo=xxx
+	path := fmt.Sprintf("/orders/%s?orderNo=%s", orderID, url.QueryEscape(orderNo))
 
 	var order model.OrderMaster
 	if err := h.api.Get(path, token(c), &order); err != nil {
@@ -157,12 +164,12 @@ func (h *OrderHandler) ShowEdit(c *gin.Context) {
 	c.HTML(http.StatusOK, "order_template/create_update.html", data)
 }
 
-// Update -> POST /orders/:orderID/:orderNo/edit : master fields only.
-// Detail lines are managed separately from the order detail page.
 func (h *OrderHandler) Update(c *gin.Context) {
 	orderID := c.Param("orderID")
-	orderNo := c.Param("orderNo")
-	path := "/orders/" + orderID + "/" + orderNo
+	orderNo := c.Query("orderNo")
+	
+	// Calls Backend: PUT /orders/:orderID?orderNo=xxx
+	path := fmt.Sprintf("/orders/%s?orderNo=%s", orderID, url.QueryEscape(orderNo))
 
 	body := gin.H{
 		"supplier_from":   c.PostForm("supplier_from"),
@@ -190,7 +197,11 @@ func (h *OrderHandler) Update(c *gin.Context) {
 }
 
 func (h *OrderHandler) Delete(c *gin.Context) {
-	path := "/orders/" + c.Param("orderID") + "/" + c.Param("orderNo")
+	orderID := c.Param("orderID")
+	orderNo := c.Query("orderNo")
+	
+	// Calls Backend: DELETE /orders/:orderID?orderNo=xxx
+	path := fmt.Sprintf("/orders/%s?orderNo=%s", orderID, url.QueryEscape(orderNo))
 
 	if err := h.api.Delete(path, token(c)); err != nil {
 		c.Redirect(http.StatusFound, "/orders?err="+url.QueryEscape("Failed to delete order: "+err.Error()))
@@ -200,11 +211,11 @@ func (h *OrderHandler) Delete(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/orders?ok="+url.QueryEscape("Order deleted"))
 }
 
-// --- Detail line endpoints ---
+// --- Detail Line Endpoints ---
 
 func (h *OrderHandler) AddDetail(c *gin.Context) {
 	orderID := c.Param("orderID")
-	orderNo := c.Param("orderNo")
+	orderNo := c.Query("orderNo")
 
 	qty, _ := strconv.Atoi(c.PostForm("qty"))
 	price, _ := strconv.ParseFloat(c.PostForm("price"), 64)
@@ -216,44 +227,31 @@ func (h *OrderHandler) AddDetail(c *gin.Context) {
 		"price":     price,
 	}
 
-	redirectBase := "/orders/" + orderID + "/" + orderNo
+	// Calls Backend: POST /orders/details?orderNo=xxx
+	backendPath := fmt.Sprintf("/orders/details?orderNo=%s", url.QueryEscape(orderNo))
+	redirectURL := fmt.Sprintf("/orders/details/%s?orderNo=%s", orderID, url.QueryEscape(orderNo))
 
-	if err := h.api.Post(redirectBase+"/details", token(c), body, nil); err != nil {
-		c.Redirect(http.StatusFound, redirectBase+"?err="+url.QueryEscape("Failed to add detail: "+err.Error()))
+	if err := h.api.Post(backendPath, token(c), body, nil); err != nil {
+		c.Redirect(http.StatusFound, redirectURL+"&err="+url.QueryEscape("Failed to add detail: "+err.Error()))
 		return
 	}
 
-	c.Redirect(http.StatusFound, redirectBase+"?ok="+url.QueryEscape("Detail line added"))
+	c.Redirect(http.StatusFound, redirectURL+"&ok="+url.QueryEscape("Detail line added"))
 }
 
 func (h *OrderHandler) DeleteDetail(c *gin.Context) {
 	orderID := c.Param("orderID")
-	orderNo := c.Param("orderNo")
-	orderDetailNo := c.Param("orderDetailNo")
+	detailID := c.Param("detailID")
+	orderNo := c.Query("orderNo")
 
-	redirectBase := "/orders/" + orderID + "/" + orderNo
-	path := redirectBase + "/details/" + orderDetailNo
+	// Calls Backend: DELETE /orders/details/:detailID?orderNo=xxx
+	backendPath := fmt.Sprintf("/orders/details/%s?orderNo=%s", detailID, url.QueryEscape(orderNo))
+	redirectURL := fmt.Sprintf("/orders/details/%s?orderNo=%s", orderID, url.QueryEscape(orderNo))
 
-	if err := h.api.Delete(path, token(c)); err != nil {
-		c.Redirect(http.StatusFound, redirectBase+"?err="+url.QueryEscape("Failed to remove detail: "+err.Error()))
+	if err := h.api.Delete(backendPath, token(c)); err != nil {
+		c.Redirect(http.StatusFound, redirectURL+"&err="+url.QueryEscape("Failed to remove detail: "+err.Error()))
 		return
 	}
 
-	c.Redirect(http.StatusFound, redirectBase+"?ok="+url.QueryEscape("Detail line removed"))
+	c.Redirect(http.StatusFound, redirectURL+"&ok="+url.QueryEscape("Detail line removed"))
 }
-
-// func (h *OrderHandler) GetCustAutocomplete(c *gin.Context) {
-// 	custID := c.Param("custID")
-// 	orderNo := c.Param("orderNo")
-// 	orderID := c.Param("orderID")
-	
-// 	redirectBase := "/orders/" + orderID + "/" + orderNo
-// 	path := redirectBase + "/getOrder/" + custID + "/" + orderNo
-
-// 	if err := h.api.Delete(path, token(c)); err != nil {
-// 		c.Redirect(http.StatusFound, redirectBase+"?err="+url.QueryEscape("Failed to remove detail: "+err.Error()))
-// 		return
-// 	}
-
-// 	c.Redirect(http.StatusFound, redirectBase+"?ok="+url.QueryEscape("Detail line removed"))
-// }

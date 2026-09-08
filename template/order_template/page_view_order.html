@@ -52,14 +52,23 @@
             <td>{{.SupplierFrom}}</td>
             <td>{{.Status_Po}}</td>
             <td class="text-end">
-              <a href="/orders/{{.OrderID}}/{{.OrderNo}}" class="btn btn-sm btn-outline-secondary">View</a>
-              {{if $.CanWrite}}
-              <a href="/orders/{{.OrderID}}/{{.OrderNo}}/edit" class="btn btn-sm btn-outline-primary">Edit</a>
-              <form method="POST" action="/orders/{{.OrderID}}/{{.OrderNo}}/delete" class="d-inline"
-                    onsubmit="return confirm('Delete this order and all its details?');">
-                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-              </form>
-              {{end}}
+                <!-- 1. View Detail (Sudah Benar) -->
+                <a href="/orders/details/{{.OrderID}}?orderNo={{urlquery .OrderNo}}" 
+                  class="btn btn-sm btn-outline-secondary">View</a>
+
+                {{if $.CanWrite}}
+                <!-- 2. Edit Page (Disesuaikan ke /orders/edit/:orderID) -->
+                <a href="/orders/edit/{{.OrderID}}?orderNo={{urlquery .OrderNo}}" 
+                  class="btn btn-sm btn-outline-primary">Edit</a>
+
+                <!-- 3. Delete Action (Disesuaikan ke /orders/delete/:orderID) -->
+                <form method="POST" 
+                      action="/orders/delete/{{.OrderID}}?orderNo={{urlquery .OrderNo}}"  
+                      class="d-inline"
+                      onsubmit="return confirm('Delete this order and all its details?');">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                </form>
+                {{end}}
             </td>
           </tr>
           {{else}}
@@ -92,7 +101,16 @@
 
 <!-- Load File JS & Inisialisasi -->
 <script src="/static/js/search_pagination.js"></script>
+<!-- Import File JS Eksternal -->
+<script src="/static/js/order.js"></script>
+
+    <!-- Script Opsional khusus halaman ini jika ada event listener -->
 <script>
+    document.addEventListener("DOMContentLoaded", function() {
+            // Memanggil fungsi dari order.js saat halaman dimuat
+      loadAllOrders();
+    });
+
   document.addEventListener('DOMContentLoaded', function () {
     initTableSearchAndPagination({
       searchInputId: 'searchInput',

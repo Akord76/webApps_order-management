@@ -1,4 +1,5 @@
 package model
+
 import (
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -7,12 +8,12 @@ import (
 type OrderDetail struct {
 	OrderDetailNo int     `json:"order_detail_no"`
 	OrderNo       string  `json:"order_no"`
+	ProductID     string  `json:"product_id"`
 	ItemName      string  `json:"item_name"`
 	Measure       string  `json:"measure"`
 	Qty           int     `json:"qty"`
 	Price         float64 `json:"price"`
 }
-
 
 // Di file model struct Go Anda
 func (d OrderDetail) Total() string {

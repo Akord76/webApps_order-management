@@ -376,3 +376,28 @@ func (h *OrderDoHandler) DeleteDetail(c *gin.Context) {
 	// Kirim respon HTTP 204 agar ditangkap blok try di JS
 	c.String(http.StatusNoContent, "Detail line removed")
 }
+
+func (h *OrderDoHandler) LoadHeaderDetails(c *gin.Context) {
+
+	orderDoNo := c.Query("orderDoNo")
+	path := "/orderdo/loadheaderdetails?orderDoNo=" + url.QueryEscape(orderDoNo)
+
+	var orderDo model.OrderMaster
+
+	if err := h.api.Get(path, token(c), &orderDo); err != nil {
+		c.Redirect(
+			http.StatusFound,
+			"/orderdo?err="+url.QueryEscape("Order Do not found"),
+		)
+		return
+	}
+
+	data := baseData(c, "Order Do Detail")
+
+	data["OrderDo"] = orderDo
+	data["OrderDetails"] = orderDo.Details
+
+	c.HTML(
+		http.StatusOK,
+		"order_do_template/detailsorder_do.html", data,)
+}
